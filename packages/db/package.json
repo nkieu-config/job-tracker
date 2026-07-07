@@ -1,0 +1,14 @@
+{
+  "name": "@job-tracker/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "prisma generate --config prisma.config.ts",
+    "typecheck": "echo \"@job-tracker/db: schema package (no TS sources to check)\""
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2",
+    "prisma": "^7.8.0"
+  }
+}

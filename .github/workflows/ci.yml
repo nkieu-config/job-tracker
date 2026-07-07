@@ -17,12 +17,11 @@ jobs:
           node-version: 22
           cache: npm
 
-      # `npm ci` runs postinstall -> `prisma generate`, which only needs the
-      # schema (no database), so CI requires no secrets.
+      # Workspaces install + postinstall runs prisma generate (no DB secrets needed).
       - run: npm ci
 
       - run: npm run lint
 
-      - run: npm run typecheck
+      - run: npm run check
 
       - run: npm test

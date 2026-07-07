@@ -8,12 +8,13 @@
 //   npm run seed
 //
 // Override the target with BASE_URL (defaults to http://localhost:3000).
-import { config } from "dotenv";
-config({ quiet: true });
+import { loadWebEnv } from "./load-web-env.mjs";
+
+loadWebEnv();
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 
-// Keep in sync with lib/demo.ts
+// Keep in sync with @job-tracker/shared/constants/demo
 const DEMO_EMAIL = "demo@jobtracker.app";
 const DEMO_PASSWORD = "demotracker2026";
 

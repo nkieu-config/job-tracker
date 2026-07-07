@@ -1,0 +1,23 @@
+{
+  "name": "@job-tracker/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas/jd-analysis": "./src/schemas/jd-analysis.ts",
+    "./schemas/application": "./src/schemas/application.ts",
+    "./schemas/resume": "./src/schemas/resume.ts",
+    "./errors": "./src/errors.ts",
+    "./constants/demo": "./src/constants/demo.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

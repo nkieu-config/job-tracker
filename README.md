@@ -58,6 +58,7 @@ Click **“Try Live Demo”** on the homepage or sign-up page — or manually us
 | Layer | Choice |
 | --- | --- |
 | Framework | Next.js 16 (App Router, Server Actions) + TypeScript |
+| AI service | Express (internal microservice) |
 | UI | Tailwind CSS v4 |
 | Database | PostgreSQL (Neon) + Prisma 7 (driver adapter) + pgvector |
 | Auth | Better Auth (sessions in Postgres) |
@@ -65,7 +66,52 @@ Click **“Try Live Demo”** on the homepage or sign-up page — or manually us
 | AI | Google Gemini 2.5 Flash (generation) + `gemini-embedding-001` (embeddings) |
 | Validation | Zod |
 | Testing / CI | Vitest + Testing Library, GitHub Actions |
-| Hosting | Vercel |
+| Monorepo | npm workspaces + Turborepo |
+| Hosting | Vercel (web) + Railway/Render (AI service) |
+
+## 📁 Project structure
+
+```
+job-tracker/
+├── apps/
+│   ├── web/                 # @job-tracker/web — Next.js 16
+│   │   ├── src/
+│   │   │   ├── app/         # App Router (routes)
+│   │   │   ├── components/  # UI by domain (auth, applications, resumes…)
+│   │   │   ├── actions/     # Server Actions
+│   │   │   ├── lib/         # Server utilities (auth, data, AI client)
+│   │   │   └── generated/   # Prisma client (generated)
+│   │   ├── tests/
+│   │   └── package.json
+│   └── ai-service/          # @job-tracker/ai-service — Express
+├── packages/
+│   ├── db/                  # Prisma schema + migrations
+│   └── shared/              # Zod schemas, AiError, shared constants
+├── docs/
+├── scripts/
+├── turbo.json
+└── package.json             # Workspace root (orchestration only)
+```
+
+## 🏗️ Architecture
+
+```
+Browser
+   │
+   ▼
+Next.js (web) ── auth, CRUD, file upload, pgvector queries
+   │                    │
+   │                    ▼
+   │              Postgres + Vercel Blob
+   │
+   │  internal HTTP (x-internal-key)
+   ▼
+Express (ai-service) ── Gemini API only
+```
+
+- **Next.js = BFF.** Handles UI, sessions, database, and rate limiting. Calls the AI service over internal HTTP — never exposes `GEMINI_API_KEY` to the web app.
+- **Express = stateless AI worker.** Three endpoints: `/analyze`, `/embed`, `/tailor` (streaming). No database access; receives text, returns JSON or a stream.
+- **Shared Zod schemas** in `packages/shared/` keep JD analysis types in sync across both apps.
 
 ## 🏗️ Architecture notes
 
@@ -77,36 +123,45 @@ Click **“Try Live Demo”** on the homepage or sign-up page — or manually us
 ## ⚙️ Local setup
 
 ```bash
-# 1. Install deps (postinstall runs `prisma generate`)
+# 1. Install deps (workspaces + postinstall runs prisma generate)
 npm install
 
 # 2. Configure environment
-cp .env.example .env   # then fill in the values below
+cp apps/web/.env.example apps/web/.env
+cp apps/ai-service/.env.example apps/ai-service/.env
+# Set INTERNAL_API_KEY to the same value in both files
 
 # 3. Apply migrations to your database
 npx prisma migrate dev
 
-# 4. Run
-npm run dev            # http://localhost:3000
+# 4. Run (two terminals)
+npm run dev:ai           # http://localhost:4000
+npm run dev              # http://localhost:3000
 ```
 
 ### Environment variables
 
-See [.env.example](.env.example). `.env` is gitignored — never commit secrets.
+See [apps/web/.env.example](apps/web/.env.example) and [apps/ai-service/.env.example](apps/ai-service/.env.example). `.env` files are gitignored.
 
 - `DATABASE_URL` — Neon Postgres connection string (pooled connection is supported and recommended via the Neon Serverless driver).
 - `BETTER_AUTH_SECRET` — random secret (`openssl rand -base64 32`).
 - `BETTER_AUTH_URL` — `http://localhost:3000` locally; your deployment URL in prod.
 - `BLOB_READ_WRITE_TOKEN` — from a Vercel Blob store (`vercel env pull`).
-- `GEMINI_API_KEY` — free key from [Google AI Studio](https://aistudio.google.com/apikey).
+- `AI_SERVICE_URL` — `http://localhost:4000` locally; your AI service URL in prod.
+- `INTERNAL_API_KEY` — shared secret between web and AI service (`openssl rand -base64 32`).
+
+AI service env (`apps/ai-service/.env`): `GEMINI_API_KEY`, `INTERNAL_API_KEY` (same value), `PORT`.
 
 ### Scripts
 
 ```bash
-npm run dev         # dev server
+npm run dev         # Next.js dev server
+npm run dev:ai      # Express AI microservice
 npm run build       # production build
+npm run build:ai    # build AI service
 npm run lint        # eslint
-npm run typecheck   # tsc --noEmit
+npm run typecheck   # web app only
+npm run check       # turbo: typecheck all workspaces
 npm test            # vitest
 npm run seed        # populate the demo account (server must be running)
 ```
@@ -119,17 +174,26 @@ To verify a running deployment by hand, follow [docs/manual-qa.md](docs/manual-q
 applications, multiple resumes, and various high-fit/low-fit pre-computed JD
 analyses so the live demo fully showcases the AI features. Start the server first (`npm run start &`), then run the seed.
 
-## 🚀 Deploy (GitHub → Vercel → Neon)
+## 🚀 Deploy (GitHub → Vercel → Render → Neon)
 
-1. **Neon** — create a free Postgres project; copy both the pooled and direct connection strings.
-2. **Vercel Blob** — create a Blob store (Storage → Create → Blob); it adds `BLOB_READ_WRITE_TOKEN` to the project.
-3. **GitHub** — push the repo.
-4. **Vercel** — import the repo and set all env vars above (`BETTER_AUTH_URL` = your production URL). Every push deploys automatically.
-5. Apply migrations to production: `npx prisma migrate deploy`.
+Full step-by-step: **[docs/deploy.md](docs/deploy.md)**
+
+1. **Neon** — Postgres; copy pooled + direct connection strings.
+2. **Vercel Blob** — create a Blob store for resume PDFs.
+3. **GitHub** — push the monorepo (includes `render.yaml`).
+4. **Render** — New → Blueprint → connect repo; set `GEMINI_API_KEY` + `INTERNAL_API_KEY` on `job-tracker-ai-service`.
+5. **Vercel** — Root Directory `apps/web`; env: `AI_SERVICE_URL` (Render URL), `INTERNAL_API_KEY`, `BETTER_AUTH_URL`, DB, Blob. No `GEMINI_API_KEY` on web.
+6. **Migrations** — `npx prisma migrate deploy`.
+
+Quick helper after Render is live:
+
+```bash
+./scripts/set-ai-service-url.sh https://job-tracker-ai-service.onrender.com
+```
 
 ## 🧩 Challenges & solutions
 
-- **Prisma 7 dropped the bundled query engine.** It now requires a driver adapter, so the client uses `@prisma/adapter-neon` and the datasource URL lives in `prisma.config.ts`, not the schema.
+- **Prisma 7 dropped the bundled query engine.** Schema and client live in `packages/db/`; migrations run from the repo root via `prisma.config.ts`.
 - **Database Connection Pooling in Serverless.** To prevent connection exhaustion from Next.js Serverless functions, the app uses `@neondatabase/serverless` and `@prisma/adapter-neon`. This enables robust connection pooling over HTTP/WebSocket natively, resolving prior TLS/SNI routing issues encountered with the standard `pg` driver.
 - **Better Auth pulled a broken kysely.** kysely `0.29.2` stopped re-exporting a symbol the adapter imports; pinned to `0.28.17` via an npm `override`.
 - **Next 16 renamed `middleware` → `proxy`.** Read the bundled Next docs and used the new `proxy.ts` convention (which also reinforces the data-layer auth checks above).
