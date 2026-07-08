@@ -4,7 +4,7 @@ A click-through checklist to confirm the app works end to end. Run it against
 either target:
 
 - **Production:** your live Vercel URL.
-- **Local:** `npm run dev:ai` (terminal 1) and `npm run dev` (terminal 2), then open http://localhost:3000.
+- **Local:** `npm run dev`, then open http://localhost:3000.
 
 > Tip: the demo account is pre-populated, so you can test everything without
 > entering data yourself. Some steps need env vars — the table notes which.
@@ -15,7 +15,7 @@ either target:
 | --- | --- |
 | Sign in / sign up, applications CRUD, dashboard | `DATABASE_URL`, `DIRECT_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` |
 | Resume upload + “View PDF” | `BLOB_READ_WRITE_TOKEN` |
-| Analyze, Resume fit, Tailor bullets (AI) | Web: `AI_SERVICE_URL`, `INTERNAL_API_KEY` · AI service: `GEMINI_API_KEY`, `INTERNAL_API_KEY` |
+| Analyze, Resume fit, Tailor bullets (AI) | `GEMINI_API_KEY` |
 
 ## Checklist
 
@@ -38,7 +38,7 @@ either target:
 
 ## If something fails
 
-- **An AI button errors** → check the AI microservice is running and env vars match. Web needs `AI_SERVICE_URL` + `INTERNAL_API_KEY`; the AI service needs `GEMINI_API_KEY` + the same `INTERNAL_API_KEY`. In production, redeploy both Vercel (web) and Railway/Render (AI service) after changing env vars.
+- **An AI button errors** → check `GEMINI_API_KEY` is set (locally in `apps/web/.env`; in prod, in Vercel env vars). In production, redeploy after changing env vars.
 - **Upload or View PDF fails** → `BLOB_READ_WRITE_TOKEN` is missing; set it and
   redeploy.
 - **Hit “AI rate limit reached”** → expected after 30 AI actions/hour per user;

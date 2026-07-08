@@ -1,12 +1,11 @@
-import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import {
   jdAnalysisSchema,
   type JdAnalysis,
 } from "@job-tracker/shared/schemas/jd-analysis";
 import { AiError } from "@job-tracker/shared/errors";
+import { getGeminiClient, GENERATION_MODEL } from "./gemini";
 
-const MODEL = "gemini-2.5-flash";
 const TIMEOUT_MS = 30_000;
 
 const responseJsonSchema = (() => {
@@ -15,18 +14,10 @@ const responseJsonSchema = (() => {
   return schema;
 })();
 
-function getClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new AiError("AI is not configured (missing GEMINI_API_KEY).");
-  }
-  return new GoogleGenAI({ apiKey });
-}
-
 export async function analyzeJobDescription(
   jobDescription: string,
 ): Promise<JdAnalysis> {
-  const ai = getClient();
+  const ai = getGeminiClient();
 
   const prompt = `You are an expert technical recruiter. Analyze the job description below and extract a structured summary.
 
@@ -45,7 +36,7 @@ ${jobDescription}
   let text: string | undefined;
   try {
     const response = await ai.models.generateContent({
-      model: MODEL,
+      model: GENERATION_MODEL,
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -73,6 +64,8 @@ ${jobDescription}
     throw new AiError("The AI returned malformed JSON.");
   }
 
+  // The LLM is untrusted input: re-validate its output against the same schema
+  // used to constrain it, so malformed responses become recoverable errors.
   const result = jdAnalysisSchema.safeParse(parsed);
   if (!result.success) {
     throw new AiError("The AI response didn't match the expected format.");
