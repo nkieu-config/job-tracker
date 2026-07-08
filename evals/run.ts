@@ -9,6 +9,7 @@ import * as tailoring from "./suites/tailoring.eval";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.resolve(here, "../.env") });
+ process.env.AI_USAGE_DISABLED = "1";
 
 type Suite = { name: string; run: (opts: RunOptions) => Promise<SuiteResult> };
 

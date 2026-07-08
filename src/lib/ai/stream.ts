@@ -1,21 +1,45 @@
 import { getGeminiClient, GENERATION_MODEL } from "./gemini";
+import { recordAiUsage, type AiFeature } from "@/lib/observability";
 
-type TextChunk = { text?: string };
+type Usage = {
+  promptTokenCount?: number;
+  candidatesTokenCount?: number;
+  totalTokenCount?: number;
+};
+type TextChunk = { text?: string; usageMetadata?: Usage };
 
 // Wrap Gemini's async chunk iterator in a web ReadableStream so a Route Handler
-// can return it straight to the browser as a plain-text token stream.
-function streamResponse(stream: AsyncIterable<TextChunk>): Response {
+// can return it straight to the browser as a plain-text token stream. Token
+// usage (on the final chunk) and total latency are recorded on close.
+function streamResponse(
+  stream: AsyncIterable<TextChunk>,
+  feature: AiFeature,
+  startedAt: number,
+): Response {
   const encoder = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
+      let usage: Usage | undefined;
+      let ok = true;
       try {
         for await (const chunk of stream) {
+          if (chunk.usageMetadata) usage = chunk.usageMetadata;
           if (chunk.text) controller.enqueue(encoder.encode(chunk.text));
         }
       } catch {
+        ok = false;
         controller.enqueue(encoder.encode("\n\n[The stream was interrupted.]"));
       } finally {
         controller.close();
+        recordAiUsage({
+          feature,
+          model: GENERATION_MODEL,
+          promptTokens: usage?.promptTokenCount ?? 0,
+          outputTokens: usage?.candidatesTokenCount ?? 0,
+          totalTokens: usage?.totalTokenCount ?? 0,
+          latencyMs: performance.now() - startedAt,
+          ok,
+        });
       }
     },
   });
@@ -31,6 +55,7 @@ function streamResponse(stream: AsyncIterable<TextChunk>): Response {
 async function generate(
   prompt: string,
   temperature: number,
+  feature: AiFeature,
 ): Promise<Response> {
   let ai;
   try {
@@ -39,14 +64,21 @@ async function generate(
     return new Response("AI is not configured.", { status: 503 });
   }
 
+  const startedAt = performance.now();
   try {
     const stream = await ai.models.generateContentStream({
       model: GENERATION_MODEL,
       contents: prompt,
       config: { temperature },
     });
-    return streamResponse(stream);
+    return streamResponse(stream, feature, startedAt);
   } catch {
+    recordAiUsage({
+      feature,
+      model: GENERATION_MODEL,
+      latencyMs: performance.now() - startedAt,
+      ok: false,
+    });
     return new Response("The AI service failed. Please try again.", {
       status: 502,
     });
@@ -76,7 +108,7 @@ Candidate's experience:
 ${experience.slice(0, 4000)}
 """`;
 
-  return generate(prompt, 0.6);
+  return generate(prompt, 0.6, "tailor");
 }
 
 export function interviewPrepStream(
@@ -106,5 +138,5 @@ Job description:
 ${jobDescription.slice(0, 6000)}
 """`;
 
-  return generate(prompt, 0.4);
+  return generate(prompt, 0.4, "interview");
 }

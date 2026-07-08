@@ -1,4 +1,5 @@
 import { AiError } from "@/lib/errors";
+import { recordAiUsage } from "@/lib/observability";
 import { getGeminiClient, EMBEDDING_MODEL } from "./gemini";
 
 export const EMBEDDING_DIM = 768;
@@ -24,6 +25,7 @@ export async function embedTextBatch(
   const ai = getGeminiClient();
   const inputs = texts.map((text) => text.slice(0, MAX_INPUT_CHARS));
 
+  const t0 = performance.now();
   let res;
   try {
     res = await ai.models.embedContent({
@@ -32,8 +34,25 @@ export async function embedTextBatch(
       config: { taskType, outputDimensionality: EMBEDDING_DIM },
     });
   } catch {
+    recordAiUsage({
+      feature: "embed",
+      model: EMBEDDING_MODEL,
+      latencyMs: performance.now() - t0,
+      ok: false,
+    });
     throw new AiError("Failed to generate embeddings. Please try again.");
   }
+
+  // The embeddings API doesn't return a token count; estimate from input size
+  // (~4 chars/token) so the cost figure isn't silently zero.
+  const estTokens = Math.ceil(inputs.reduce((n, s) => n + s.length, 0) / 4);
+  recordAiUsage({
+    feature: "embed",
+    model: EMBEDDING_MODEL,
+    promptTokens: estTokens,
+    totalTokens: estTokens,
+    latencyMs: performance.now() - t0,
+  });
 
   const embeddings = res.embeddings;
   if (!embeddings || embeddings.length !== inputs.length) {

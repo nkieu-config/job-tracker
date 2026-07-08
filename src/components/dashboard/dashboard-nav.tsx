@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Briefcase, FileText } from "lucide-react";
+import { LayoutDashboard, Briefcase, FileText, Activity } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
@@ -13,6 +13,12 @@ const NAV_ITEMS = [
     exact: false,
   },
   { href: "/dashboard/resumes", label: "Resumes", icon: FileText, exact: false },
+  {
+    href: "/dashboard/ai-usage",
+    label: "AI usage",
+    icon: Activity,
+    exact: false,
+  },
 ];
 
 export function DashboardNav({ orientation }: { orientation: "vertical" | "horizontal" }) {

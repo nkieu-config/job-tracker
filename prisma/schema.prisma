@@ -133,3 +133,19 @@ model ResumeVersion {
   @@index([userId])
   @@map("resume_version")
 }
+
+model AiUsage {
+  id           String   @id @default(cuid())
+  feature      String
+  model        String
+  promptTokens Int      @default(0)
+  outputTokens Int      @default(0)
+  totalTokens  Int      @default(0)
+  latencyMs    Int
+  ok           Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([feature])
+  @@map("ai_usage")
+}

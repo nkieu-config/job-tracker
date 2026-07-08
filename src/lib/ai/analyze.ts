@@ -4,6 +4,7 @@ import {
   type JdAnalysis,
 } from "@/lib/schemas/jd-analysis";
 import { AiError } from "@/lib/errors";
+import { recordAiUsage } from "@/lib/observability";
 import { getGeminiClient, GENERATION_MODEL } from "./gemini";
 
 const TIMEOUT_MS = 30_000;
@@ -33,6 +34,7 @@ Job description:
 ${jobDescription}
 """`;
 
+  const t0 = performance.now();
   let text: string | undefined;
   try {
     const response = await ai.models.generateContent({
@@ -46,7 +48,21 @@ ${jobDescription}
       },
     });
     text = response.text;
+    recordAiUsage({
+      feature: "analyze",
+      model: GENERATION_MODEL,
+      promptTokens: response.usageMetadata?.promptTokenCount ?? 0,
+      outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
+      totalTokens: response.usageMetadata?.totalTokenCount ?? 0,
+      latencyMs: performance.now() - t0,
+    });
   } catch (err) {
+    recordAiUsage({
+      feature: "analyze",
+      model: GENERATION_MODEL,
+      latencyMs: performance.now() - t0,
+      ok: false,
+    });
     if (err instanceof DOMException && err.name === "TimeoutError") {
       throw new AiError("The AI took too long to respond. Please try again.");
     }
