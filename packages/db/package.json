@@ -3,9 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./generated/prisma/client.ts"
+  },
   "scripts": {
     "generate": "prisma generate --config prisma.config.ts",
-    "typecheck": "echo \"@job-tracker/db: schema package (no TS sources to check)\""
+    "typecheck": "echo \"@job-tracker/db: generated client is @ts-nocheck (nothing to check)\""
+  },
+  "dependencies": {
+    "@prisma/client": "^7.8.0"
   },
   "devDependencies": {
     "dotenv": "^17.4.2",

@@ -18,3 +18,9 @@ export const jdAnalysisSchema = z.object({
 });
 
 export type JdAnalysis = z.infer<typeof jdAnalysisSchema>;
+
+export const storedJdAnalysisSchema = jdAnalysisSchema.extend({
+  skillMatches: z.array(z.string()).optional(),
+});
+
+export type StoredJdAnalysis = z.infer<typeof storedJdAnalysisSchema>;

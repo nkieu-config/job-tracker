@@ -44,7 +44,6 @@ yarn-error.log*
 **/next-env.d.ts
 
 # prisma generated client (output target for @job-tracker/db)
-/apps/web/src/generated
 /packages/db/generated
 
 # turbo

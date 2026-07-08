@@ -8,18 +8,17 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @job-tracker/web",
+    "dev": "turbo run dev",
     "build": "turbo run build",
     "start": "npm run start -w @job-tracker/web",
     "lint": "turbo run lint",
     "check": "turbo run typecheck",
-    "test": "npm run test -w @job-tracker/web",
+    "test": "turbo run test",
     "test:watch": "npm run test:watch -w @job-tracker/web",
     "seed": "node scripts/seed.mjs",
-    "generate": "npm run generate -w @job-tracker/db",
+    "generate": "turbo run generate",
     "postinstall": "npm run generate -w @job-tracker/db",
-    "dev:ai": "npm run dev -w @job-tracker/ai-service",
-    "build:ai": "npm run build -w @job-tracker/ai-service"
+    "dev:web": "npm run dev -w @job-tracker/web"
   },
   "devDependencies": {
     "@prisma/adapter-pg": "^7.8.0",
