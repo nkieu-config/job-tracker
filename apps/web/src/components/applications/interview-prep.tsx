@@ -1,42 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { inputClass } from "@/lib/form-styles";
-import { saveTailoredBullets } from "@/actions/applications";
+import { Sparkles } from "lucide-react";
+import { saveInterviewPrep } from "@/actions/applications";
 import { useToast } from "@/components/ui/toast";
 
-export function TailorBullets({
+export function InterviewPrep({
   id,
-  initialExperience = "",
   initialOutput = "",
 }: {
   id: string;
-  initialExperience?: string;
   initialOutput?: string;
 }) {
   const toast = useToast();
-  const [experience, setExperience] = useState(initialExperience);
   const [output, setOutput] = useState(initialOutput);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function generate() {
-    if (!experience.trim()) {
-      setError("Describe your experience first.");
-      return;
-    }
     setError(null);
     setOutput("");
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/applications/${id}/tailor`, {
+      const res = await fetch(`/api/applications/${id}/interview`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ experience }),
       });
       if (!res.ok || !res.body) {
-        setError((await res.text()) || "Failed to generate bullets.");
+        setError((await res.text()) || "Failed to generate interview prep.");
         return;
       }
       const reader = res.body.getReader();
@@ -49,11 +40,11 @@ export function TailorBullets({
         setOutput(fullText);
       }
       if (fullText.trim()) {
-        const saved = await saveTailoredBullets(id, experience, fullText);
+        const saved = await saveInterviewPrep(id, fullText);
         if (saved.error) {
-          toast("Bullets generated but could not be saved.", "error");
+          toast("Prep sheet generated but could not be saved.", "error");
         } else {
-          toast("Bullets saved to this application.");
+          toast("Interview prep saved to this application.");
         }
       }
     } catch {
@@ -74,29 +65,21 @@ export function TailorBullets({
 
   return (
     <div className="flex flex-col gap-3">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          generate();
-        }}
-        className="flex flex-col gap-3"
-      >
-        <textarea
-          value={experience}
-          onChange={(e) => setExperience(e.target.value)}
-          rows={4}
-          placeholder="Paste a rough description of a project or role you want to tailor…"
-          aria-label="Experience to tailor"
-          className={inputClass}
-        />
+      <div>
         <button
-          type="submit"
+          type="button"
+          onClick={generate}
           disabled={loading}
-          className="inline-flex items-center justify-center bg-primary text-on-primary font-sans font-bold text-[16px] tracking-[0.2px] py-2.5 px-5 rounded-pill transition-colors hover:bg-primary-press disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 bg-primary text-on-primary font-sans font-bold text-[14px] tracking-[0.144px] py-2.5 px-5 rounded-pill transition-colors hover:bg-primary-press disabled:opacity-60"
         >
-          {loading ? "Tailoring…" : output ? "Regenerate bullets" : "Tailor bullets"}
+          <Sparkles size={16} aria-hidden="true" />
+          {loading
+            ? "Preparing…"
+            : output
+              ? "Regenerate prep sheet"
+              : "Generate prep sheet"}
         </button>
-      </form>
+      </div>
 
       {error && (
         <p role="alert" className="text-[14px] font-sans text-semantic-error">
@@ -108,7 +91,7 @@ export function TailorBullets({
         <div className="flex flex-col gap-2">
           <div
             aria-live="polite"
-            className="whitespace-pre-wrap rounded-xl border border-hairline bg-canvas p-6 font-sans text-[16px] text-ink"
+            className="whitespace-pre-wrap rounded-xl border border-hairline bg-canvas p-6 font-sans text-[15px] leading-relaxed text-ink"
           >
             {output}
             {loading && <span className="animate-pulse">▍</span>}
@@ -120,7 +103,7 @@ export function TailorBullets({
                 onClick={copyOutput}
                 className="inline-flex items-center justify-center bg-canvas text-ink font-sans font-bold text-[14px] py-2 px-4 rounded-pill border border-hairline transition-colors hover:bg-canvas-lavender"
               >
-                Copy bullets
+                Copy prep sheet
               </button>
             </div>
           )}

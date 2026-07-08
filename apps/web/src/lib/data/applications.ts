@@ -8,10 +8,40 @@ import {
 // applications. This is the real authorization boundary (alongside the
 // session check), not the proxy.
 
-export function getApplications(userId: string, status?: ApplicationStatus) {
+export const APPLICATION_SORTS = ["newest", "deadline", "company"] as const;
+export type ApplicationSort = (typeof APPLICATION_SORTS)[number];
+
+export function getApplications(
+  userId: string,
+  options: {
+    status?: ApplicationStatus;
+    query?: string;
+    sort?: ApplicationSort;
+  } = {},
+) {
+  const { status, query, sort = "newest" } = options;
   return prisma.application.findMany({
-    where: { userId, ...(status ? { status } : {}) },
-    orderBy: { createdAt: "desc" },
+    where: {
+      userId,
+      ...(status ? { status } : {}),
+      ...(query
+        ? {
+            OR: [
+              { company: { contains: query, mode: "insensitive" as const } },
+              { role: { contains: query, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+    },
+    orderBy:
+      sort === "deadline"
+        ? [
+            { deadline: { sort: "asc" as const, nulls: "last" as const } },
+            { createdAt: "desc" as const },
+          ]
+        : sort === "company"
+          ? [{ company: "asc" as const }, { createdAt: "desc" as const }]
+          : [{ createdAt: "desc" as const }],
   });
 }
 
@@ -39,10 +69,11 @@ export async function getStatusCounts(
 }
 
 export function getUpcomingDeadlines(userId: string, limit = 5) {
+  const startOfTodayUtc = new Date(new Date().toISOString().slice(0, 10));
   return prisma.application.findMany({
     where: {
       userId,
-      deadline: { gte: new Date() },
+      deadline: { gte: startOfTodayUtc },
       status: { not: "REJECTED" },
     },
     orderBy: { deadline: "asc" },

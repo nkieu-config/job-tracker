@@ -8,6 +8,15 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  trustedOrigins: (request) => {
+    if (!request) return [];
+    const origin = request.headers.get("origin") ?? "";
+    const host = request.headers.get("host") ?? "";
+    const isLocalServer = /^localhost(:\d+)?$/.test(host);
+    return isLocalServer && /^http:\/\/localhost:\d+$/.test(origin)
+      ? [origin]
+      : [];
+  },
   // nextCookies() must be the LAST plugin — it lets Better Auth set cookies
   // from Next.js server actions/route handlers.
   plugins: [nextCookies()],

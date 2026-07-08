@@ -51,7 +51,7 @@ function StageCard({
     <Link
       href={`/dashboard/applications?status=${status}`}
       style={{ animationDelay: `${index * 70}ms` }}
-      className="animate-rise flex flex-1 flex-col gap-2.5 rounded-[12px] border border-hairline bg-canvas p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md md:min-w-0"
+      className="animate-rise flex flex-1 flex-col gap-2.5 rounded-xl border border-hairline bg-canvas p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md md:min-w-0"
     >
       <div className="flex items-center gap-2">
         <span className={`h-2 w-2 rounded-full ${color.dot}`} />
@@ -113,7 +113,7 @@ export function Pipeline({
       <Link
         href="/dashboard/applications?status=REJECTED"
         style={{ animationDelay: "280ms" }}
-        className="animate-rise flex items-center justify-between rounded-[12px] border border-hairline bg-canvas px-4 py-3 transition-colors hover:bg-surface-hover"
+        className="animate-rise flex items-center justify-between rounded-xl border border-hairline bg-canvas px-4 py-3 transition-colors hover:bg-surface-hover"
       >
         <span className="flex items-center gap-2 text-[12px] font-sans font-bold uppercase tracking-wider text-ink-mute">
           <span className={`h-2 w-2 rounded-full ${STATUS_COLORS.REJECTED.dot}`} />

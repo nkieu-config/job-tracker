@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import {
   APPLICATION_STATUSES,
   STATUS_LABELS,
@@ -117,7 +118,7 @@ export function ApplicationForm({
           className={inputClass}
         />
         <div className="text-[13px] font-sans text-ink bg-canvas-lavender px-3 py-2 rounded-md border border-hairline flex items-start gap-2 mt-1 shadow-sm">
-          <span className="text-[14px]">✨</span>
+          <Sparkles size={14} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
           <span><b>Pro Tip:</b> Paste the full job description here to unlock AI Skills Analysis and Resume Fit Scoring!</span>
         </div>
         <FieldError messages={fe?.jobDescription} />
@@ -137,7 +138,7 @@ export function ApplicationForm({
       {state.error && (
         <p
           role="alert"
-          className="rounded-[8px] bg-semantic-error-tint px-3 py-2 text-[14px] font-sans text-semantic-error"
+          className="rounded-lg bg-semantic-error-tint px-3 py-2 text-[14px] font-sans text-semantic-error"
         >
           {state.error}
         </p>
@@ -147,13 +148,13 @@ export function ApplicationForm({
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center bg-primary text-on-primary font-sans font-bold text-[16px] tracking-[0.2px] py-[14px] px-[28px] rounded-[90px] transition-colors hover:bg-primary-press disabled:opacity-60"
+          className="inline-flex items-center justify-center bg-primary text-on-primary font-sans font-bold text-[16px] tracking-[0.2px] py-3.5 px-7 rounded-pill transition-colors hover:bg-primary-press disabled:opacity-60"
         >
           {pending ? "Saving…" : submitLabel}
         </button>
         <Link
           href={cancelHref}
-          className="inline-flex items-center justify-center bg-canvas-lavender text-ink font-sans font-bold text-[16px] tracking-[0.2px] py-[14px] px-[28px] rounded-[90px] transition-colors hover:bg-canvas-lavender-hover"
+          className="inline-flex items-center justify-center bg-canvas-lavender text-ink font-sans font-bold text-[16px] tracking-[0.2px] py-3.5 px-7 rounded-pill transition-colors hover:bg-canvas-lavender-hover"
         >
           Cancel
         </Link>

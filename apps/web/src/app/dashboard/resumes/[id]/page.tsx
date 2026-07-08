@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/get-session";
-import { formatDate } from "@/lib/format";
+import { formatDisplayDate } from "@/lib/format";
 import { getResumeVersion } from "@/lib/data/resumes";
 import { DeleteResumeButton } from "@/components/resumes/delete-resume-button";
 
@@ -33,7 +33,7 @@ export default async function ResumeDetailPage({
               {resume.label}
             </h1>
             <p className="mt-2 font-sans text-[16px] text-ink-mute">
-              Added {formatDate(resume.createdAt)}
+              Added {formatDisplayDate(resume.createdAt)}
             </p>
           </div>
           <div className="flex w-full sm:w-auto items-center gap-2">
@@ -42,7 +42,7 @@ export default async function ResumeDetailPage({
                 href={`/api/resumes/${resume.id}/file`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 sm:flex-none inline-flex items-center justify-center bg-canvas-lavender text-ink font-sans font-bold text-[14px] tracking-[0.144px] py-[10px] px-[20px] rounded-[90px] transition-colors hover:bg-canvas-lavender-hover whitespace-nowrap"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center bg-canvas-lavender text-ink font-sans font-bold text-[14px] tracking-[0.144px] py-2.5 px-5 rounded-pill transition-colors hover:bg-canvas-lavender-hover whitespace-nowrap"
               >
                 View PDF
               </a>
@@ -59,11 +59,11 @@ export default async function ResumeDetailPage({
           Extracted text
         </h2>
         {resume.content ? (
-          <pre className="mt-4 max-h-[28rem] overflow-auto whitespace-pre-wrap rounded-[12px] border border-hairline bg-canvas p-[24px] font-sans text-[16px] text-ink">
+          <pre className="mt-4 max-h-[28rem] overflow-auto whitespace-pre-wrap rounded-xl border border-hairline bg-canvas p-6 font-sans text-[16px] text-ink">
             {resume.content}
           </pre>
         ) : (
-          <p className="mt-4 rounded-[16px] border border-dashed border-hairline p-8 text-center font-sans text-[16px] text-ink-mute bg-canvas">
+          <p className="mt-4 rounded-2xl border border-dashed border-hairline p-8 text-center font-sans text-[16px] text-ink-mute bg-canvas">
             No text could be extracted (the PDF may be a scanned image).
           </p>
         )}

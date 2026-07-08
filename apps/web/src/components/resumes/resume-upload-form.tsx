@@ -68,7 +68,7 @@ export function ResumeUploadForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-6 rounded-[16px] border border-hairline bg-canvas p-[32px]"
+      className="flex flex-col gap-6 rounded-2xl border border-hairline bg-canvas p-8"
     >
       <label className={labelClass}>
         Label
@@ -88,7 +88,7 @@ export function ResumeUploadForm() {
           name="file"
           accept="application/pdf,.pdf"
           required
-          className="text-[14px] text-ink-mute file:mr-3 file:rounded-[4px] file:border-0 file:bg-hairline file:px-3 file:py-2 file:text-[14px] file:font-medium file:text-ink hover:file:bg-canvas-lavender"
+          className="text-[14px] text-ink-mute file:mr-3 file:rounded-sm file:border-0 file:bg-hairline file:px-3 file:py-2 file:text-[14px] file:font-medium file:text-ink hover:file:bg-canvas-lavender"
         />
         <span className="text-[12px] font-sans font-medium text-ink-mute">
           PDF only, up to {humanFileSize(MAX_RESUME_BYTES)}.
@@ -98,7 +98,7 @@ export function ResumeUploadForm() {
       {error && (
         <p
           role="alert"
-          className="rounded-[8px] bg-semantic-error-tint px-3 py-2 text-[14px] font-sans text-semantic-error"
+          className="rounded-lg bg-semantic-error-tint px-3 py-2 text-[14px] font-sans text-semantic-error"
         >
           {error}
         </p>
@@ -107,7 +107,7 @@ export function ResumeUploadForm() {
       <button
         type="submit"
         disabled={loading}
-        className="inline-flex items-center justify-center bg-primary text-on-primary font-sans font-bold text-[16px] tracking-[0.2px] py-[14px] px-[28px] rounded-[90px] transition-colors hover:bg-primary-press disabled:opacity-60"
+        className="inline-flex items-center justify-center bg-primary text-on-primary font-sans font-bold text-[16px] tracking-[0.2px] py-3.5 px-7 rounded-pill transition-colors hover:bg-primary-press disabled:opacity-60"
       >
         {loading ? "Uploading & parsing…" : "Upload resume"}
       </button>

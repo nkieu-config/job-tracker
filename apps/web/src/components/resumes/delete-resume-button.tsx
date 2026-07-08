@@ -1,23 +1,31 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { deleteResume } from "@/actions/resumes";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export function DeleteResumeButton({ id }: { id: string }) {
+  const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  function handleDelete() {
-    if (!confirm("Delete this resume version? This can't be undone.")) return;
-    startTransition(() => deleteResume(id));
-  }
-
   return (
-    <button
-      onClick={handleDelete}
-      disabled={pending}
-      className="inline-flex items-center justify-center bg-semantic-error-tint text-semantic-error font-sans font-bold text-[14px] tracking-[0.144px] py-[10px] px-[20px] rounded-[90px] transition-colors hover:bg-semantic-error-hover disabled:opacity-60"
-    >
-      {pending ? "Deleting…" : "Delete"}
-    </button>
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        disabled={pending}
+        className="inline-flex items-center justify-center bg-semantic-error-tint text-semantic-error font-sans font-bold text-[14px] tracking-[0.144px] py-2.5 px-5 rounded-pill transition-colors hover:bg-semantic-error-hover disabled:opacity-60"
+      >
+        {pending ? "Deleting…" : "Delete"}
+      </button>
+      <ConfirmDialog
+        open={open}
+        title="Delete this resume version?"
+        description="The PDF and its extracted text will be permanently removed. This can't be undone."
+        confirmLabel="Delete"
+        pending={pending}
+        onCancel={() => setOpen(false)}
+        onConfirm={() => startTransition(() => deleteResume(id))}
+      />
+    </>
   );
 }

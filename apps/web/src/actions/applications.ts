@@ -8,8 +8,11 @@ import { getSession } from "@/lib/get-session";
 import {
   applicationInputSchema,
   applicationInputFromFormData,
+  APPLICATION_STATUSES,
+  type ApplicationStatus,
 } from "@job-tracker/shared/schemas/application";
 import { analyzeJobDescription, embedText, AiError } from "@/lib/ai-client";
+import { matchSkillsSemantic } from "@/lib/semantic-skills";
 import { getResumeVersions } from "@/lib/data/resumes";
 import {
   saveJdEmbedding,
@@ -78,7 +81,32 @@ export async function updateApplication(
   redirect(`/dashboard/applications/${id}`);
 }
 
-export type AnalyzeState = { error?: string };
+export async function updateApplicationStatus(
+  id: string,
+  status: ApplicationStatus,
+): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/sign-in");
+
+  if (!APPLICATION_STATUSES.includes(status)) {
+    return { error: "Invalid status." };
+  }
+
+  const result = await prisma.application.updateMany({
+    where: { id, userId: session.user.id },
+    data: { status },
+  });
+  if (result.count === 0) {
+    return { error: "Application not found." };
+  }
+
+  revalidatePath("/dashboard/applications");
+  revalidatePath(`/dashboard/applications/${id}`);
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export type AnalyzeState = { error?: string; success?: boolean };
 
 export async function analyzeApplication(
   id: string,
@@ -111,16 +139,27 @@ export async function analyzeApplication(
     };
   }
 
+  const resumes = await getResumeVersions(session.user.id);
+  const resumeText = resumes.map((r) => r.content ?? "").join("\n");
+  const storedAnalysis = resumeText.trim()
+    ? {
+        ...analysis,
+        skillMatches: (
+          await matchSkillsSemantic(analysis.requiredSkills, resumeText)
+        ).matched,
+      }
+    : analysis;
+
   await prisma.application.updateMany({
     where: { id, userId: session.user.id },
-    data: { analysis, analyzedAt: new Date() },
+    data: { analysis: storedAnalysis, analyzedAt: new Date() },
   });
 
   revalidatePath(`/dashboard/applications/${id}`);
-  return {};
+  return { success: true };
 }
 
-export type FitState = { error?: string };
+export type FitState = { error?: string; success?: boolean };
 
 export async function computeResumeFit(
   applicationId: string,
@@ -167,6 +206,52 @@ export async function computeResumeFit(
   }
 
   revalidatePath(`/dashboard/applications/${applicationId}`);
+  return { success: true };
+}
+
+export async function saveTailoredBullets(
+  id: string,
+  experience: string,
+  bullets: string,
+): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/sign-in");
+
+  const result = await prisma.application.updateMany({
+    where: { id, userId: session.user.id },
+    data: {
+      tailoredExperience: experience.slice(0, 4000),
+      tailoredBullets: bullets.slice(0, 8000),
+      tailoredAt: new Date(),
+    },
+  });
+  if (result.count === 0) {
+    return { error: "Application not found." };
+  }
+
+  revalidatePath(`/dashboard/applications/${id}`);
+  return {};
+}
+
+export async function saveInterviewPrep(
+  id: string,
+  content: string,
+): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) redirect("/sign-in");
+
+  const result = await prisma.application.updateMany({
+    where: { id, userId: session.user.id },
+    data: {
+      interviewPrep: content.slice(0, 12000),
+      interviewPrepAt: new Date(),
+    },
+  });
+  if (result.count === 0) {
+    return { error: "Application not found." };
+  }
+
+  revalidatePath(`/dashboard/applications/${id}`);
   return {};
 }
 

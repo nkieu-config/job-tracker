@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/get-session";
-import { formatDate } from "@/lib/format";
+import { formatDisplayDate } from "@/lib/format";
 import { getApplication } from "@/lib/data/applications";
 import { getResumeVersions } from "@/lib/data/resumes";
-import { jdAnalysisSchema } from "@job-tracker/shared/schemas/jd-analysis";
+import { storedJdAnalysisSchema } from "@job-tracker/shared/schemas/jd-analysis";
 import { matchSkills } from "@/lib/skills";
+import { fitBand } from "@/lib/fit-score";
 import { getResumeFitScores } from "@/lib/data/embeddings";
+import { Sparkles } from "lucide-react";
 import { StatusBadge } from "@/components/applications/status-badge";
 import { DeleteApplicationButton } from "@/components/applications/delete-application-button";
 import { AnalyzeButton } from "@/components/applications/analyze-button";
 import { ComputeFitButton } from "@/components/applications/compute-fit-button";
 import { TailorBullets } from "@/components/applications/tailor-bullets";
+import { InterviewPrep } from "@/components/applications/interview-prep";
 
 export default async function ApplicationDetailPage({
   params,
@@ -36,12 +39,26 @@ export default async function ApplicationDetailPage({
 
   // Parse the stored AI analysis (it was validated before saving, but the DB
   // column is untyped JSON, so validate again on the way out).
-  const analysisResult = jdAnalysisSchema.safeParse(application.analysis);
+  const analysisResult = storedJdAnalysisSchema.safeParse(application.analysis);
   const analysis = analysisResult.success ? analysisResult.data : null;
 
-  // Gap analysis compares required skills against all the user's resume text.
   const resumeText = resumes.map((r) => r.content ?? "").join("\n");
-  const gap = analysis ? matchSkills(analysis.requiredSkills, resumeText) : null;
+  const gap = analysis
+    ? analysis.skillMatches
+      ? {
+          matched: analysis.requiredSkills.filter((s) =>
+            analysis.skillMatches?.includes(s),
+          ),
+          missing: analysis.requiredSkills.filter(
+            (s) => !analysis.skillMatches?.includes(s),
+          ),
+        }
+      : matchSkills(analysis.requiredSkills, resumeText)
+    : null;
+  const analysisStale =
+    analysis?.skillMatches !== undefined &&
+    application.analyzedAt !== null &&
+    resumes.some((r) => r.createdAt > application.analyzedAt!);
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,7 +79,7 @@ export default async function ApplicationDetailPage({
           <div className="flex w-full sm:w-auto items-center gap-2">
             <Link
               href={`/dashboard/applications/${application.id}/edit`}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center bg-canvas-lavender text-ink font-sans font-bold text-[14px] tracking-[0.144px] py-[10px] px-[20px] rounded-[90px] transition-colors hover:bg-canvas-lavender-hover"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center bg-canvas-lavender text-ink font-sans font-bold text-[14px] tracking-[0.144px] py-2.5 px-5 rounded-pill transition-colors hover:bg-canvas-lavender-hover"
             >
               Edit
             </Link>
@@ -73,7 +90,7 @@ export default async function ApplicationDetailPage({
         </div>
       </div>
 
-      <dl className="grid gap-4 rounded-[16px] border border-hairline bg-canvas p-[32px] sm:grid-cols-2">
+      <dl className="grid gap-4 rounded-2xl border border-hairline bg-canvas p-8 sm:grid-cols-2">
         <div>
           <dt className="text-[14px] font-sans font-medium text-ink-mute">
             Status
@@ -88,7 +105,7 @@ export default async function ApplicationDetailPage({
           </dt>
           <dd className="mt-2 text-[16px] font-sans font-bold text-ink">
             {application.deadline
-              ? formatDate(application.deadline)
+              ? formatDisplayDate(application.deadline)
               : "—"}
           </dd>
         </div>
@@ -133,15 +150,15 @@ export default async function ApplicationDetailPage({
             <div className="w-full sm:w-auto">
               <AnalyzeButton
                 id={application.id}
-                label={analysis ? "✨ Re-analyze" : "✨ Analyze job description"}
+                label={analysis ? "Re-analyze" : "Analyze job description"}
               />
             </div>
           )}
         </div>
 
         {!application.jobDescription?.trim() ? (
-          <div className="rounded-[16px] border border-hairline p-8 text-center bg-canvas-lavender flex flex-col items-center justify-center gap-2 shadow-sm">
-            <span className="text-[24px]">✨</span>
+          <div className="rounded-2xl border border-hairline p-8 text-center bg-canvas-lavender flex flex-col items-center justify-center gap-2 shadow-sm">
+            <Sparkles size={24} className="text-primary" aria-hidden="true" />
             <p className="font-sans text-[16px] text-ink">
               <b>Unlock AI Skills Analysis</b>
             </p>
@@ -150,17 +167,17 @@ export default async function ApplicationDetailPage({
             </p>
             <Link
               href={`/dashboard/applications/${application.id}/edit`}
-              className="mt-2 inline-flex items-center justify-center bg-canvas text-link-blue font-sans font-bold text-[14px] py-[8px] px-[16px] rounded-[90px] border border-hairline hover:bg-hairline transition-colors"
+              className="mt-2 inline-flex items-center justify-center bg-canvas text-link-blue font-sans font-bold text-[14px] py-2 px-4 rounded-pill border border-hairline hover:bg-hairline transition-colors"
             >
               Add Job Description
             </Link>
           </div>
         ) : !analysis ? (
-          <p className="rounded-[16px] border border-dashed border-hairline p-8 text-center font-sans text-[16px] text-ink-mute bg-canvas">
+          <p className="rounded-2xl border border-dashed border-hairline p-8 text-center font-sans text-[16px] text-ink-mute bg-canvas">
             Not analyzed yet — run “Analyze job description”.
           </p>
         ) : (
-          <div className="flex flex-col gap-6 rounded-[16px] border border-hairline bg-canvas p-[32px]">
+          <div className="flex flex-col gap-6 rounded-2xl border border-hairline bg-canvas p-8">
             <div>
               <p className="text-[16px] font-sans text-ink">
                 {analysis.summary}
@@ -238,6 +255,13 @@ export default async function ApplicationDetailPage({
                 consider adding {gap.missing.join(", ")} to your resume.
               </p>
             )}
+
+            {analysisStale && (
+              <p className="rounded-xl bg-semantic-warning-tint px-4 py-3 text-[14px] font-sans font-medium text-ink">
+                You&rsquo;ve uploaded resumes since this analysis — re-analyze
+                to refresh the skill matching.
+              </p>
+            )}
           </div>
         )}
       </section>
@@ -251,15 +275,15 @@ export default async function ApplicationDetailPage({
             <div className="w-full sm:w-auto">
               <ComputeFitButton
                 id={application.id}
-                label={fitScores.length ? "✨ Recompute fit" : "✨ Compute resume fit"}
+                label={fitScores.length ? "Recompute fit" : "Compute resume fit"}
               />
             </div>
           )}
         </div>
 
         {!application.jobDescription?.trim() ? (
-          <div className="rounded-[16px] border border-hairline p-8 text-center bg-canvas-lavender flex flex-col items-center justify-center gap-2 shadow-sm">
-            <span className="text-[24px]">✨</span>
+          <div className="rounded-2xl border border-hairline p-8 text-center bg-canvas-lavender flex flex-col items-center justify-center gap-2 shadow-sm">
+            <Sparkles size={24} className="text-primary" aria-hidden="true" />
             <p className="font-sans text-[16px] text-ink">
               <b>Unlock AI Fit Scoring</b>
             </p>
@@ -268,52 +292,92 @@ export default async function ApplicationDetailPage({
             </p>
           </div>
         ) : fitScores.length === 0 ? (
-          <p className="rounded-[16px] border border-dashed border-hairline p-8 text-center font-sans text-[16px] text-ink-mute bg-canvas">
+          <p className="rounded-2xl border border-dashed border-hairline p-8 text-center font-sans text-[16px] text-ink-mute bg-canvas">
             {resumes.some((r) => r.content?.trim())
               ? "No fit scores yet — run “Compute resume fit” to rank your resumes against this JD."
               : "Upload a resume with readable text, then compute fit."}
           </p>
         ) : (
-          <ul className="flex flex-col gap-3">
-            {fitScores.map((fit, i) => (
-              <li
-                key={fit.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[12px] border border-hairline bg-canvas px-6 py-4"
-              >
-                <Link
-                  href={`/dashboard/resumes/${fit.id}`}
-                  className="min-w-0 truncate font-sans font-bold text-link-blue hover:text-link-hover hover:underline"
-                >
-                  {fit.label}
-                </Link>
-                <div className="flex shrink-0 items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-none border-hairline pt-3 sm:pt-0">
-                  {i === 0 && (
-                    <span className="rounded-[4px] bg-semantic-success-tint px-2 py-1 text-[12px] font-sans font-bold text-semantic-success">
-                      Best match
-                    </span>
-                  )}
-                  <span className="font-display-md text-ink">
-                    {Math.round(fit.score * 100)}%
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="flex flex-col gap-3">
+            <ul className="flex flex-col gap-3">
+              {fitScores.map((fit, i) => {
+                const band = fitBand(fit.score);
+                return (
+                  <li
+                    key={fit.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-hairline bg-canvas px-6 py-4"
+                  >
+                    <Link
+                      href={`/dashboard/resumes/${fit.id}`}
+                      className="min-w-0 truncate font-sans font-bold text-link-blue hover:text-link-hover hover:underline"
+                    >
+                      {fit.label}
+                    </Link>
+                    <div className="flex shrink-0 items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-none border-hairline pt-3 sm:pt-0">
+                      {i === 0 && fitScores.length > 1 && (
+                        <span className="rounded-sm bg-canvas-lavender px-2 py-1 text-[12px] font-sans font-bold text-primary">
+                          Best match
+                        </span>
+                      )}
+                      <span
+                        className={`rounded-full px-3 py-1 text-[12px] font-sans font-bold ${band.className}`}
+                      >
+                        {band.label}
+                      </span>
+                      <span className="font-display-md text-ink tabular-nums">
+                        {Math.round(fit.score * 100)}%
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="font-sans text-[14px] text-ink-mute">
+              Scores are the cosine similarity between this job description and
+              each resume&rsquo;s embedding, computed in Postgres with pgvector.
+              Use them to compare your resume versions — the percentage is
+              relative, not a hiring probability.
+            </p>
+          </div>
         )}
       </section>
 
       {application.jobDescription?.trim() && (
         <section className="flex flex-col gap-3">
           <div>
-            <h2 className="text-[18px] font-sans font-bold text-ink">
-              ✨ Tailor resume bullets
+            <h2 className="flex items-center gap-2 text-[18px] font-sans font-bold text-ink">
+              <Sparkles size={18} className="text-primary" aria-hidden="true" />
+              Tailor resume bullets
             </h2>
             <p className="mt-2 font-sans text-[16px] text-ink-mute">
               Paste an experience and the AI rewrites it as bullets tuned to this
               job — streamed live.
             </p>
           </div>
-          <TailorBullets id={application.id} />
+          <TailorBullets
+            id={application.id}
+            initialExperience={application.tailoredExperience ?? ""}
+            initialOutput={application.tailoredBullets ?? ""}
+          />
+        </section>
+      )}
+
+      {application.jobDescription?.trim() && (
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="flex items-center gap-2 text-[18px] font-sans font-bold text-ink">
+              <Sparkles size={18} className="text-primary" aria-hidden="true" />
+              Interview prep
+            </h2>
+            <p className="mt-2 font-sans text-[16px] text-ink-mute">
+              Generate likely technical and behavioral questions for this job,
+              with pointers on what strong answers cover.
+            </p>
+          </div>
+          <InterviewPrep
+            id={application.id}
+            initialOutput={application.interviewPrep ?? ""}
+          />
         </section>
       )}
 

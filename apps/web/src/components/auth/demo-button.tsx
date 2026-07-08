@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "@/lib/auth-client";
+import { useToast } from "@/components/ui/toast";
 import { DEMO_EMAIL, DEMO_PASSWORD } from "@job-tracker/shared/constants/demo";
 
 export function DemoButton({
@@ -19,6 +20,7 @@ export function DemoButton({
   disabled?: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [demoLoading, setDemoLoading] = useState(false);
 
   async function loginDemo() {
@@ -31,7 +33,7 @@ export function DemoButton({
     setDemoLoading(false);
     if (error) {
       if (onError) onError("The demo account is unavailable right now.");
-      else alert("The demo account is unavailable right now.");
+      else toast("The demo account is unavailable right now.", "error");
       return;
     }
     router.push("/dashboard");

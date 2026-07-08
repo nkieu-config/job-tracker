@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/get-session";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 
 export default async function DashboardLayout({
   children,
@@ -16,44 +17,50 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-canvas-lavender font-sans">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline bg-canvas px-4 py-4 md:px-12">
-        <nav className="flex items-center gap-4 sm:gap-8">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2"
-          >
-            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-              <span className="text-on-primary font-bold text-xl leading-none">J</span>
+    <div className="flex flex-1 bg-canvas-lavender font-sans">
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col justify-between border-r border-hairline bg-canvas px-4 py-6 lg:flex">
+        <div className="flex flex-col gap-8">
+          <Link href="/dashboard" className="flex items-center gap-2 px-2">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary">
+              <span className="text-xl font-bold leading-none text-on-primary">
+                J
+              </span>
             </div>
-            <span className="font-display-md text-primary text-2xl tracking-tight hidden sm:inline-block">Job Tracker</span>
+            <span className="font-display-md text-2xl tracking-tight text-primary">
+              Job Tracker
+            </span>
           </Link>
-          <div className="flex gap-4 sm:gap-6 text-[16px] font-medium text-ink-mute">
-            <Link
-              href="/dashboard/applications"
-              className="transition-colors hover:text-primary"
-            >
-              Applications
-            </Link>
-            <Link
-              href="/dashboard/resumes"
-              className="transition-colors hover:text-primary"
-            >
-              Resumes
-            </Link>
-          </div>
-        </nav>
-        <div className="flex items-center gap-4 ml-auto">
-          <span className="hidden text-[14px] text-ink-mute sm:inline">
+          <nav aria-label="Main">
+            <DashboardNav orientation="vertical" />
+          </nav>
+        </div>
+        <div className="flex flex-col gap-3 border-t border-hairline pt-4">
+          <span className="truncate px-2 text-[13px] text-ink-mute">
             {session.user.email}
           </span>
           <SignOutButton />
         </div>
-      </header>
+      </aside>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
-        {children}
-      </main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-between gap-3 border-b border-hairline bg-canvas px-4 py-3 lg:hidden">
+          <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
+              <span className="text-xl font-bold leading-none text-on-primary">
+                J
+              </span>
+            </div>
+          </Link>
+          <nav aria-label="Main" className="min-w-0">
+            <DashboardNav orientation="horizontal" />
+          </nav>
+          <SignOutButton />
+        </header>
+
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8 lg:py-12">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
