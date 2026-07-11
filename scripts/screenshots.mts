@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "@playwright/test";
+import { chromium, type Page } from "@playwright/test";
 import {
   BASE_URL,
   CONTEXT_OPTIONS,
@@ -37,21 +37,28 @@ try {
 
 const PAD = 24;
 
-async function shootFullPage(file: string) {
-  const pageHeight = await page.evaluate(
+async function shootFullPage(target: Page, file: string, maxHeight = 2200) {
+  const pageHeight = await target.evaluate(
     () => document.documentElement.scrollHeight,
   );
-  await page.setViewportSize({
+  await target.setViewportSize({
     width: CONTEXT_OPTIONS.viewport.width,
-    height: Math.min(pageHeight, 2200),
+    height: Math.min(pageHeight, maxHeight),
   });
-  await settle(page);
-  await page.screenshot({ path: path.join(outDir, file) });
-  await page.setViewportSize({ ...CONTEXT_OPTIONS.viewport });
+  await settle(target);
+  await target.screenshot({ path: path.join(outDir, file) });
+  await target.setViewportSize({ ...CONTEXT_OPTIONS.viewport });
   console.log(`✓ ${file}`);
 }
 
-async function shootSection(heading: string, file: string) {
+// The README pairs these clips two to a row, so a section that runs long would
+// render shorter than its neighbour and leave a ragged gap beside it. Capping
+// the clip keeps every section shot in the same aspect band at the source,
+// rather than propping the layout up with per-image width attributes that the
+// next regeneration would invalidate.
+const SECTION_MAX_HEIGHT = 480;
+
+async function shootSection(heading: string, file: string, maxHeight?: number) {
   const section = sectionByHeading(page, heading);
   const rect = await section.evaluate((el) => {
     const r = el.getBoundingClientRect();
@@ -74,18 +81,26 @@ async function shootSection(heading: string, file: string) {
       x,
       y,
       width: Math.min(rect.width + PAD * 2, rect.docWidth - x),
-      height: Math.min(rect.height + PAD * 2, rect.docHeight - y),
+      height: Math.min(
+        rect.height + PAD * 2,
+        rect.docHeight - y,
+        maxHeight ?? SECTION_MAX_HEIGHT,
+      ),
     },
   });
   console.log(`✓ ${file}`);
 }
 
+// The README hero is the app at its own fold, not the whole scrollable page: a
+// full-page dashboard renders ~880px tall on GitHub and pushes everything below
+// it off the screen. Cutting at the viewport also lands the hero on the same 1.6
+// aspect as the board shot that follows, so the two full-width images agree.
 await settle(page);
-await shootFullPage("dashboard.png");
+await shootFullPage(page, "dashboard.png", CONTEXT_OPTIONS.viewport.height);
 
 await page.goto("/dashboard/applications");
 await settle(page);
-await shootFullPage("board.png");
+await shootFullPage(page, "board.png");
 
 await page.goto("/dashboard/applications/demo_app_1");
 await settle(page);
@@ -116,5 +131,13 @@ await settle(page);
 await shootSection("Interview prep", "interview-prep.png");
 
 await context.close();
+
+const { context: visitorContext, page: visitorPage } =
+  await newDemoPage(browser);
+await visitorPage.goto("/");
+await settle(visitorPage);
+await shootFullPage(visitorPage, "landing.png", 4000);
+await visitorContext.close();
+
 await browser.close();
 console.log(`Saved to ${path.relative(rootDir, outDir)}/`);

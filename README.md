@@ -75,18 +75,26 @@ Full deep-dive — system design, decision rationale, challenges-and-solutions l
 | **Resume versions**  | PDF upload (content-type and magic-byte checked), text extraction, private Vercel Blob storage                                    |
 | **AI observability** | Admin page tracking tokens and cost per AI feature; a shared hourly AI budget per user                                            |
 
-| Kanban board                                                                                    | JD analysis & skill gap                                                                       |
-| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| ![Kanban board with applications grouped by status](docs/screenshots/board.png)                   | ![Required skills tagged as matched or missing against the resume](docs/screenshots/jd-analysis.png) |
+The pipeline is a board, not a spreadsheet — drag a card and the move persists optimistically:
 
-| Resume fit ranking                                                                                 | Bullet tailoring (streamed)                                                       |
-| --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| ![Resume versions ranked by cosine similarity to the job description](docs/screenshots/resume-fit.png) | ![Resume bullets tailored to the job description](docs/screenshots/tailor.png)      |
+![Kanban board with applications grouped by status](docs/screenshots/board.png)
+
+And the four AI features, all of them on one application:
+
+| JD analysis & skill gap | Resume fit ranking |
+| --- | --- |
+| ![Required skills tagged as matched or missing against the resume](docs/screenshots/jd-analysis.png) | ![Resume versions ranked by cosine similarity to the job description](docs/screenshots/resume-fit.png) |
+
+| Bullet tailoring (streamed) | Interview prep (streamed) |
+| --- | --- |
+| ![Resume bullets tailored to the job description](docs/screenshots/tailor.png) | ![Generated prep sheet with likely technical and behavioral questions](docs/screenshots/interview-prep.png) |
 
 <details>
-<summary>📸 One more — the AI interview prep sheet</summary>
+<summary>📸 One more — the landing page, before you sign in</summary>
 
-![Generated interview prep sheet with technical and behavioral questions for the role](docs/screenshots/interview-prep.png)
+The design system in [docs/design.md](docs/design.md), as actually rendered:
+
+![Job Tracker landing page — hero, the four AI features, and the closing call to action](docs/screenshots/landing.png)
 
 </details>
 
