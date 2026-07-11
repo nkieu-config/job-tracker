@@ -49,13 +49,21 @@ export default defineConfig({
         "src/actions/**",
         "src/app/api/**",
       ],
-      exclude: [
-        "src/server/ai/**",
-        "src/server/auth.ts",
-        "src/lib/auth-client.ts",
-      ],
+      exclude: ["src/server/auth.ts", "src/lib/auth-client.ts"],
       thresholds: {
         "src/server/admin.ts": {
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100,
+        },
+        "src/server/ai/prompt.ts": {
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100,
+        },
+        "src/app/api/cron/sweep-rate-limits/route.ts": {
           statements: 100,
           branches: 100,
           functions: 100,
