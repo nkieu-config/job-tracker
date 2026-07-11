@@ -6,13 +6,24 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - uses: actions/setup-node@v4
+      - name: Guard the HNSW index against accidental migration drops
+        run: |
+          last=$(grep -hoE '(CREATE|DROP) INDEX[^;]*resume_version_embedding_hnsw_idx' prisma/migrations/*/migration.sql | tail -n 1)
+          if [[ "$last" != CREATE* ]]; then
+            echo '::error::Migrations drop resume_version_embedding_hnsw_idx without recreating it. Re-add the CREATE INDEX to the newest migration (see prisma/migrations/20260709120000_restore_hnsw_index_and_jd_embedding_hash).'
+            exit 1
+          fi
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -24,6 +35,8 @@ jobs:
 
       - run: npm run typecheck
 
-      - run: npm test
+      - run: npm run test:coverage
 
       - run: npm run build
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/placeholder

@@ -1,0 +1,41 @@
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+
+vi.mock("@/actions/applications", () => ({ updateApplicationStatus: vi.fn() }));
+vi.mock("@/components/ui/toast", () => ({ useToast: () => vi.fn() }));
+
+const { ApplicationsBoard } = await import("@/components/applications/board");
+
+const APPS = [
+  {
+    id: "a1",
+    role: "Backend Engineer",
+    company: "Acme",
+    status: "SAVED" as const,
+    deadline: null,
+  },
+];
+
+describe("ApplicationsBoard accessibility", () => {
+  it("never nests the card link inside an interactive drag control", () => {
+    render(<ApplicationsBoard applications={APPS} />);
+    const link = screen.getByRole("link", { name: /Backend Engineer/ });
+
+    let ancestor = link.parentElement;
+    while (ancestor) {
+      expect(ancestor.getAttribute("role")).not.toBe("button");
+      expect(ancestor.tagName).not.toBe("BUTTON");
+      expect(ancestor.hasAttribute("tabindex")).toBe(false);
+      ancestor = ancestor.parentElement;
+    }
+  });
+
+  it("exposes exactly one link and one labelled drag handle per card", () => {
+    render(<ApplicationsBoard applications={APPS} />);
+
+    expect(screen.getAllByRole("link", { name: /Backend Engineer/ })).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: "Reorder Backend Engineer at Acme" }),
+    ).toBeInTheDocument();
+  });
+});
