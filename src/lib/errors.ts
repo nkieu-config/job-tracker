@@ -1,4 +1,5 @@
 export type AiErrorKind =
+  | "config"
   | "transport"
   | "timeout"
   | "empty"
@@ -6,6 +7,12 @@ export type AiErrorKind =
   | "schema";
 
 const RETRYABLE: ReadonlySet<AiErrorKind> = new Set(["transport", "timeout"]);
+
+const MODEL_OUTPUT: ReadonlySet<AiErrorKind> = new Set([
+  "empty",
+  "malformed",
+  "schema",
+]);
 
 export class AiError extends Error {
   readonly kind: AiErrorKind;
@@ -25,6 +32,6 @@ export class AiError extends Error {
   }
 
   get isModelOutputFailure(): boolean {
-    return !RETRYABLE.has(this.kind);
+    return MODEL_OUTPUT.has(this.kind);
   }
 }

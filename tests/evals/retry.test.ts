@@ -39,6 +39,12 @@ describe("AiError kinds", () => {
     expect(new AiError("boom").kind).toBe("transport");
     expect(new AiError("boom").isModelOutputFailure).toBe(false);
   });
+
+  it("treats a missing key as neither retryable nor the model's fault", () => {
+    const err = new AiError("AI is not configured.", "config");
+    expect(err.retryable).toBe(false);
+    expect(err.isModelOutputFailure).toBe(false);
+  });
 });
 
 describe("classify", () => {
@@ -56,6 +62,12 @@ describe("classify", () => {
   it("counts an unknown throw as an API error, not a model failure", () => {
     expect(classify(new Error("socket hang up")).status).toBe("api-error");
     expect(classify("weird").status).toBe("api-error");
+  });
+
+  it("counts a missing key as an API error, not a model failure", () => {
+    expect(classify(new AiError("not configured", "config")).status).toBe(
+      "api-error",
+    );
   });
 });
 

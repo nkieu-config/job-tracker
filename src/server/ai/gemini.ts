@@ -17,7 +17,10 @@ export {
 export function getGeminiClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new AiError("AI is not configured (missing GEMINI_API_KEY).");
+    throw new AiError(
+      "AI is not configured (missing GEMINI_API_KEY).",
+      "config",
+    );
   }
   return new GoogleGenAI({ apiKey });
 }
