@@ -2,8 +2,12 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { tailorBulletsStream } from "@/server/ai/stream";
-import { judgeBullets } from "../lib/judge";
+import { readAiStream } from "@/lib/stream-protocol";
+import { AiError } from "@/lib/errors";
+import { judgeBullets, JUDGE_MODEL, judgeIsSelfJudging } from "../lib/judge";
 import { paceGenerate } from "../lib/pace";
+import { withRetry, classify } from "../lib/retry";
+import { createLatencyTimer } from "../lib/timing";
 import { mean, percentile } from "../lib/metrics";
 import type { SuiteResult, RunOptions, ItemResult } from "../lib/types";
 
@@ -12,16 +16,20 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 type TlItem = { id: string; jobDescription: string; experience: string };
 
 async function readStream(res: Response): Promise<string> {
-  if (!res.body) return "";
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  let out = "";
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    out += dec.decode(value, { stream: true });
+  if (!res.ok) {
+    throw new AiError(`The AI service returned ${res.status}.`, "transport");
   }
-  return out;
+  if (!res.body) {
+    throw new AiError("The AI returned an empty response.", "empty");
+  }
+  const { text, end } = await readAiStream(res.body, () => {});
+  if (!end.ok) {
+    throw new AiError(end.error, "transport");
+  }
+  if (!text.trim()) {
+    throw new AiError("The AI returned an empty response.", "empty");
+  }
+  return text;
 }
 
 export const name = "tailoring";
@@ -45,21 +53,60 @@ export async function run(opts: RunOptions = {}): Promise<SuiteResult> {
 
   let judged = 0;
   const latencies: number[] = [];
-  for (const it of data) {
-    try {
-      await paceGenerate();
-      const t0 = performance.now();
-      const res = await tailorBulletsStream(it.jobDescription, it.experience);
-      const output = await readStream(res);
-      const latencyMs = performance.now() - t0;
-      latencies.push(latencyMs);
+  const apiErrors: string[] = [];
 
-      await paceGenerate();
-      const { rubric, tokens } = await judgeBullets(
-        it.jobDescription,
-        it.experience,
-        output,
-      );
+  for (const it of data) {
+    const timer = createLatencyTimer();
+    let output: string;
+
+    try {
+      output = await withRetry(async () => {
+        await paceGenerate();
+        return timer.measure(async () => {
+          const res = await tailorBulletsStream(
+            it.jobDescription,
+            it.experience,
+          );
+          return readStream(res);
+        });
+      });
+      latencies.push(timer.latencyMs);
+    } catch (err) {
+      const outcome = classify(err);
+
+      // The API never answered: that says nothing about model quality, so the
+      // item is excluded from every metric rather than scored zero.
+      if (outcome.status === "api-error") {
+        apiErrors.push(it.id);
+        items.push({
+          id: it.id,
+          latencyMs: 0,
+          scores: {},
+          detail: `excluded — api error: ${outcome.error.message.slice(0, 80)}`,
+        });
+        continue;
+      }
+
+      // The model answered with nothing usable. That is a real model failure
+      // and is scored, not dropped.
+      judged++;
+      relevance.push(0);
+      grounded.push(0);
+      formatting.push(0);
+      items.push({
+        id: it.id,
+        latencyMs: timer.latencyMs,
+        scores: { relevance: 0, grounded: 0, formatting: 0 },
+        detail: `unusable output (${outcome.error.kind}): ${outcome.error.message.slice(0, 80)}`,
+      });
+      continue;
+    }
+
+    try {
+      const { rubric, tokens } = await withRetry(async () => {
+        await paceGenerate();
+        return judgeBullets(it.jobDescription, it.experience, output);
+      });
       judged++;
       relevance.push(rubric.relevance);
       grounded.push(rubric.grounded);
@@ -69,7 +116,7 @@ export async function run(opts: RunOptions = {}): Promise<SuiteResult> {
 
       items.push({
         id: it.id,
-        latencyMs,
+        latencyMs: timer.latencyMs,
         scores: {
           relevance: rubric.relevance,
           grounded: rubric.grounded,
@@ -80,19 +127,29 @@ export async function run(opts: RunOptions = {}): Promise<SuiteResult> {
           : undefined,
       });
     } catch (err) {
+      // The judge failed, not the model under test. Excluding is the only
+      // honest option: we have an answer but no score for it.
+      apiErrors.push(it.id);
       items.push({
         id: it.id,
-        latencyMs: 0,
+        latencyMs: timer.latencyMs,
         scores: {},
-        detail: `skipped: ${(err as Error).message.slice(0, 80)}`,
+        detail: `excluded — judge error: ${(err instanceof Error ? err.message : String(err)).slice(0, 80)}`,
       });
     }
   }
 
-  const notes =
-    judged < data.length
-      ? [`${data.length - judged}/${data.length} items skipped (API error/quota)`]
-      : undefined;
+  const notes: string[] = [`Judge model: ${JUDGE_MODEL}.`];
+  if (judgeIsSelfJudging()) {
+    notes.push(
+      `The judge is the same model as the one under test — scores are inflated by self-preference bias. Set EVAL_JUDGE_MODEL to a different model.`,
+    );
+  }
+  if (apiErrors.length) {
+    notes.push(
+      `${apiErrors.length}/${data.length} items excluded after retries — the API or judge never returned a usable response (${apiErrors.join(", ")}). Metrics are over the ${judged} items actually scored.`,
+    );
+  }
   return {
     name,
     description:

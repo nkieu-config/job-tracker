@@ -3,7 +3,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { matchSkills } from "@/lib/skills";
 import { matchSkillsSemantic } from "@/server/semantic-skills";
+import { embedTexts } from "@/server/ai-client";
 import { skillPRF1, macroAverage, mean, percentile } from "../lib/metrics";
+import { withRetry } from "../lib/retry";
 import type { SuiteResult, RunOptions, ItemResult } from "../lib/types";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -17,9 +19,18 @@ type SmItem = {
 
 export const name = "skill-match";
 
+// matchSkillsSemantic swallows embedding failures and silently returns the
+// lexical result. Without this probe a dead embedding API would show up as
+// "the semantic layer adds no lift" instead of as an error.
+async function assertEmbeddingApiIsUp(): Promise<void> {
+  await withRetry(() => embedTexts(["preflight"], "SEMANTIC_SIMILARITY"));
+}
+
 // Ablation: the same gold matched-skill set scored against the lexical layer
 // alone vs the lexical + embedding layer. The gap is the semantic layer's lift.
 export async function run(opts: RunOptions = {}): Promise<SuiteResult> {
+  await assertEmbeddingApiIsUp();
+
   const raw = await readFile(
     path.resolve(here, "../datasets/skill-match.json"),
     "utf8",

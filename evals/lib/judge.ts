@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { getGeminiClient, GENERATION_MODEL } from "@/server/ai/gemini";
 
+// A model judging its own output scores it leniently (self-preference bias), so
+// the judge is a different, stronger model than the one under test. Override
+// with EVAL_JUDGE_MODEL; setting it equal to GENERATION_MODEL is a valid but
+// self-judging configuration, and the harness says so.
+export const JUDGE_MODEL = process.env.EVAL_JUDGE_MODEL ?? "gemini-2.5-pro";
+
+export const judgeIsSelfJudging = (): boolean => JUDGE_MODEL === GENERATION_MODEL;
+
 // LLM-as-judge: a separate model call scores generated bullets against a
 // rubric. Temperature 0 for repeatability; output is Zod-validated like any
 // other model response.
@@ -53,7 +61,7 @@ ${output}
 """`;
 
   const res = await ai.models.generateContent({
-    model: GENERATION_MODEL,
+    model: JUDGE_MODEL,
     contents: prompt,
     config: {
       responseMimeType: "application/json",

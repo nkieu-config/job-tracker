@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { analyzeJobDescription } from "@/server/ai/analyze";
 import { skillPRF1, macroAverage, accuracy, mean, percentile } from "../lib/metrics";
 import { paceGenerate } from "../lib/pace";
+import { withRetry, classify } from "../lib/retry";
+import { createLatencyTimer } from "../lib/timing";
 import type { SuiteResult, RunOptions, ItemResult } from "../lib/types";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -29,14 +31,21 @@ export async function run(opts: RunOptions = {}): Promise<SuiteResult> {
   const predSeniority: string[] = [];
   const goldSeniority: string[] = [];
   let schemaValid = 0;
+  let responses = 0;
+  const apiErrors: string[] = [];
+  const responseLatencies: number[] = [];
 
   for (const it of data) {
-    await paceGenerate();
-    const t0 = performance.now();
+    const timer = createLatencyTimer();
     try {
-      const res = await analyzeJobDescription(it.jobDescription);
-      const latencyMs = performance.now() - t0;
+      const res = await withRetry(async () => {
+        await paceGenerate();
+        return timer.measure(() => analyzeJobDescription(it.jobDescription));
+      });
+      const latencyMs = timer.latencyMs;
+      responses++;
       schemaValid++;
+      responseLatencies.push(latencyMs);
       const prf1 = skillPRF1(res.requiredSkills, it.expected.requiredSkills);
       prf1s.push(prf1);
       predSeniority.push(res.seniority);
@@ -60,33 +69,60 @@ export async function run(opts: RunOptions = {}): Promise<SuiteResult> {
         },
         detail: detail || undefined,
       });
+      continue;
     } catch (err) {
-      const latencyMs = performance.now() - t0;
-      predSeniority.push("<error>");
+      const latencyMs = timer.latencyMs;
+      const outcome = classify(err);
+
+      // The API never answered: this says nothing about model quality, so the
+      // item is excluded from every metric rather than scored zero.
+      if (outcome.status === "api-error") {
+        apiErrors.push(it.id);
+        items.push({
+          id: it.id,
+          latencyMs,
+          scores: {},
+          detail: `excluded — api error: ${outcome.error.message}`,
+        });
+        continue;
+      }
+
+      // The model answered, but the answer was unusable. That is a real model
+      // failure and counts against both schema validity and P/R/F1.
+      responses++;
+      responseLatencies.push(latencyMs);
+      predSeniority.push("<invalid>");
       goldSeniority.push(it.expected.seniority);
       prf1s.push(skillPRF1([], it.expected.requiredSkills));
       items.push({
         id: it.id,
         latencyMs,
         scores: { f1: 0, precision: 0, recall: 0, seniority: 0 },
-        detail: `error: ${(err as Error).message}`,
+        detail: `invalid output (${outcome.error.kind}): ${outcome.error.message}`,
       });
     }
   }
 
   const macro = macroAverage(prf1s);
-  const latencies = items.map((i) => i.latencyMs);
+  const latencies = responseLatencies;
+
+  const notes = apiErrors.length
+    ? [
+        `${apiErrors.length}/${data.length} items excluded after retries — the API never returned a response (${apiErrors.join(", ")}). Metrics are over the ${responses} responses actually received.`,
+      ]
+    : undefined;
+
   return {
     name,
     description:
       "JD skill extraction (macro P/R/F1) + seniority accuracy + schema validity",
-    n: data.length,
+    n: responses,
     metrics: {
       f1: macro.f1,
       precision: macro.precision,
       recall: macro.recall,
       "seniority accuracy": accuracy(predSeniority, goldSeniority),
-      "schema valid": schemaValid / data.length,
+      "schema valid": responses ? schemaValid / responses : 0,
     },
     timingMs: {
       mean: mean(latencies),
@@ -94,5 +130,6 @@ export async function run(opts: RunOptions = {}): Promise<SuiteResult> {
       p95: percentile(latencies, 95),
     },
     items,
+    notes,
   };
 }
