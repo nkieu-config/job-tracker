@@ -1,0 +1,41 @@
+name: Reseed demo
+
+on:
+  schedule:
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reseed-demo
+  cancel-in-progress: false
+
+jobs:
+  reseed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      # postinstall runs `prisma generate` (no DB secrets needed).
+      - run: npm ci
+
+      # The seed signs the demo account up through the live app (so passwords
+      # hash server-side) and resets only that account's own rows.
+      - name: Reseed the demo account against production
+        env:
+          BASE_URL: https://job-tracker-app-project.vercel.app
+          DIRECT_URL: ${{ secrets.PROD_DIRECT_URL }}
+        run: |
+          if [ -z "$DIRECT_URL" ]; then
+            echo '::error::The PROD_DIRECT_URL repository secret is not set. Add the production branch direct connection string (kept as a comment in the local .env) under Settings -> Secrets and variables -> Actions.'
+            exit 1
+          fi
+          npm run seed

@@ -80,6 +80,11 @@ npm run seed
 
 The seed only resets the demo account's own rows, so it is safe to re-run.
 
+After the first deploy this is automated: the
+[reseed-demo workflow](../.github/workflows/reseed-demo.yml) runs the same seed
+nightly (20:00 UTC). It needs one repository secret, `PROD_DIRECT_URL` — the
+`production` branch's direct connection string.
+
 ---
 
 ## Step 4 — Smoke test

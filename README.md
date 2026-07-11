@@ -28,7 +28,7 @@
 Then open **Applications → Senior Backend Engineer (Acme Corp)**: the skill-gap chips show **5/6 skills matched** with Kubernetes flagged as the gap, **Resume fit** ranks three resume versions by cosine similarity (73% Strong fit on top), and **Tailor resume bullets** regenerates live, token by token.
 
 > [!NOTE]
-> The demo account is shared and public — anything you change is visible to other visitors until the next reseed, and all AI actions on it draw from one 30-calls-per-hour budget.
+> The demo account is shared and public — anything you change is visible to other visitors until the nightly reseed, and all AI actions on it draw from one 30-calls-per-hour budget.
 
 Prefer to run it yourself? Two commands and a `.env` — see [Quick start](#quick-start).
 
@@ -170,6 +170,7 @@ npm run screenshots     # regenerate README screenshots via Playwright
 
 - **Every push and PR to `main`** — [CI](.github/workflows/ci.yml) runs lint → typecheck → all tests with coverage thresholds → a production build.
 - **AI evals are deliberately not in push CI** — they call the real Gemini API, which costs quota. A [manual workflow](.github/workflows/eval.yml) runs any suite on demand and uploads the scorecard as an artifact; the pure metric functions are still unit-tested in every CI run.
+- **Nightly** — [a scheduled workflow](.github/workflows/reseed-demo.yml) reseeds the shared demo account, so whatever visitors changed during the day rolls back to a fully populated state.
 - **Deploy** — Vercel rebuilds and ships `main` automatically; the step-by-step Neon → Vercel setup is in [docs/deploy.md](docs/deploy.md).
 
 ## Documentation
