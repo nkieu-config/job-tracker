@@ -1,11 +1,9 @@
 import "server-only";
 
-import { neonConfig } from "@neondatabase/serverless";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { attachDatabasePool } from "@vercel/functions";
+import pg from "pg";
 import { PrismaClient } from "@/generated/prisma/client";
-import ws from "ws";
-
-neonConfig.webSocketConstructor = ws;
 
 const pooledConnectionString = process.env.DATABASE_URL;
 const migrationOnlyDirectConnectionString = process.env.DIRECT_URL;
@@ -21,8 +19,9 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const adapter = new PrismaNeon({ connectionString });
-  return new PrismaClient({ adapter });
+  const pool = new pg.Pool({ connectionString, max: 5 });
+  attachDatabasePool(pool);
+  return new PrismaClient({ adapter: new PrismaPg(pool) });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

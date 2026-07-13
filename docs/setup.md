@@ -32,7 +32,7 @@ See [.env.example](../.env.example). `.env` files are gitignored.
 
 | Variable | Notes |
 | --- | --- |
-| `DATABASE_URL` | Neon Postgres connection string (pooled, via the Neon serverless driver) |
+| `DATABASE_URL` | Neon Postgres connection string (pooled, `-pooler` endpoint — queried over TCP by `pg`) |
 | `DIRECT_URL` | Direct (non-pooled) connection string, used by migrations |
 | `BETTER_AUTH_SECRET` | Random secret — `openssl rand -base64 32` |
 | `BETTER_AUTH_URL` | `http://localhost:3000` locally; your deployment URL in prod |

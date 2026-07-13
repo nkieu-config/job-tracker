@@ -10,7 +10,7 @@ import { PrismaClient } from "@/generated/prisma/client";
 //   TEST_DATABASE_URL=postgresql://... npx vitest run tests/server/rate-limit.integration.test.ts
 const url = process.env.TEST_DATABASE_URL;
 
-// Swap the Neon-backed @/server/prisma for a plain pg client pointed at the
+// Swap the app's @/server/prisma for a plain pg client pointed at the
 // test database. The factory constructs lazily, so it's harmless when skipped.
 const prisma = url
   ? new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) })
