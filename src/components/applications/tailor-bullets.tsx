@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { inputClass } from "@/components/ui/form-styles";
 import { saveTailoredBullets } from "@/actions/applications";
-import { readAiStream } from "@/lib/stream-protocol";
-import { useToast } from "@/components/ui/toast";
+import { useAiStream } from "@/components/applications/use-ai-stream";
 
 export function TailorBullets({
   id,
@@ -15,81 +14,24 @@ export function TailorBullets({
   initialExperience?: string;
   initialOutput?: string;
 }) {
-  const toast = useToast();
   const [experience, setExperience] = useState(initialExperience);
-  const [output, setOutput] = useState(initialOutput);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
+  const { output, loading, error, setError, generate, copyOutput } = useAiStream(
+    {
+      url: `/api/applications/${id}/tailor`,
+      initialOutput,
+      requestFailed: "Failed to generate bullets.",
+      onSave: (text) => saveTailoredBullets(id, experience, text),
+      savedMessage: "Bullets saved to this application.",
+      saveFailedMessage: "Bullets generated but could not be saved.",
+    },
+  );
 
-  // Cancel any in-flight stream when the component unmounts (e.g. the user
-  // navigates away) — otherwise the metered Gemini generation keeps running to
-  // completion and setState fires on an unmounted component.
-  useEffect(() => () => abortRef.current?.abort(), []);
-
-  async function generate() {
+  function submit() {
     if (!experience.trim()) {
       setError("Describe your experience first.");
       return;
     }
-    // Bullets already saved to this application stay on screen until new ones
-    // start streaming, and come back if the attempt fails — a rate-limited
-    // regenerate shouldn't look like the saved copy was lost.
-    const previous = output;
-    setError(null);
-    setLoading(true);
-
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    try {
-      const res = await fetch(`/api/applications/${id}/tailor`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ experience }),
-        signal: controller.signal,
-      });
-      if (!res.ok || !res.body) {
-        setError((await res.text()) || "Failed to generate bullets.");
-        return;
-      }
-      setOutput("");
-      const { text, end } = await readAiStream(res.body, setOutput);
-      if (!end.ok) {
-        setOutput(previous);
-        setError(end.error);
-        return;
-      }
-      if (!text.trim()) {
-        setOutput(previous);
-        setError("The AI returned an empty response. Please try again.");
-        return;
-      }
-      const saved = await saveTailoredBullets(id, experience, text);
-      if (saved.error) {
-        toast("Bullets generated but could not be saved.", "error");
-      } else {
-        toast("Bullets saved to this application.");
-      }
-    } catch (err) {
-      // An unmount/abort isn't a failure the (gone) user needs to see.
-      if ((err as Error)?.name !== "AbortError") {
-        setOutput(previous);
-        setError("Streaming failed. Please try again.");
-      }
-    } finally {
-      if (abortRef.current === controller) abortRef.current = null;
-      setLoading(false);
-    }
-  }
-
-  async function copyOutput() {
-    try {
-      await navigator.clipboard.writeText(output);
-      toast("Copied to clipboard.");
-    } catch {
-      toast("Could not copy to clipboard.", "error");
-    }
+    generate({ experience });
   }
 
   return (
@@ -97,7 +39,7 @@ export function TailorBullets({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          generate();
+          submit();
         }}
         className="flex flex-col gap-3"
       >
