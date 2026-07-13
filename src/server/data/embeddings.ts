@@ -47,13 +47,19 @@ export const MAX_EMBEDDINGS_PER_CALL = 20;
 
 // Vectors from different embedding models don't share a space, so a row
 // embedded by an older model needs re-embedding, not just an absent one.
+//
+// The text test is `~ '[^[:space:]]'`, not `length(trim(content)) > 0`, because
+// Postgres `trim` strips spaces but not newlines or tabs: a scanned PDF whose
+// extraction yields nothing but newlines would otherwise pass, spending an AI
+// call to embed whitespace and ranking the resulting meaningless vector against
+// real ones in the fit scores.
 export function getResumesNeedingEmbedding(userId: string) {
   return prisma.$queryRaw<{ id: string; content: string }[]>`
     SELECT id, content FROM "resume_version"
     WHERE "userId" = ${userId}
       AND ("embedding" IS NULL OR "embeddingModel" IS DISTINCT FROM ${EMBEDDING_MODEL})
       AND content IS NOT NULL
-      AND length(trim(content)) > 0
+      AND content ~ '[^[:space:]]'
     ORDER BY "createdAt" DESC
     LIMIT ${MAX_EMBEDDINGS_PER_CALL}
   `;

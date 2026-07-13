@@ -51,6 +51,6 @@ either target:
 ```bash
 npm run lint        # code style
 npm run typecheck   # types
-npm test            # unit/component tests (218)
+npm test            # unit/component tests (224)
 npm run build       # production build
 ```
