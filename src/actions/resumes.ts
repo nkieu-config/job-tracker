@@ -5,15 +5,14 @@ import { revalidatePath } from "next/cache";
 import { del } from "@vercel/blob";
 import { prisma } from "@/server/prisma";
 import { getSession } from "@/server/get-session";
+import { getResumeFileUrl } from "@/server/data/resumes";
 
 export async function deleteResume(id: string): Promise<void> {
   const session = await getSession();
   if (!session) redirect("/sign-in");
 
   // Scope by userId so a user can only delete their own resume.
-  const resume = await prisma.resumeVersion.findFirst({
-    where: { id, userId: session.user.id },
-  });
+  const resume = await getResumeFileUrl(id, session.user.id);
   if (!resume) {
     redirect("/dashboard/resumes");
   }
