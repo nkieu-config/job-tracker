@@ -79,6 +79,10 @@ The pipeline is a board, not a spreadsheet — drag a card and the move persists
 
 ![Kanban board with applications grouped by status](docs/screenshots/board.png)
 
+Two of the AI features stream. Here is bullet tailoring as it actually runs — a real recording of the demo account, not a mockup:
+
+![Resume bullets streaming in token by token as the model rewrites experience against the job description](docs/screenshots/tailor-streaming.gif)
+
 And the four AI features, all of them on one application:
 
 | JD analysis & skill gap | Resume fit ranking |
@@ -98,7 +102,7 @@ The design system in [docs/design.md](docs/design.md), as actually rendered:
 
 </details>
 
-All screenshots are generated from the seeded demo by `npm run screenshots` (Playwright), so they never drift from the real UI.
+Every image on this page is generated from the seeded demo by Playwright — `npm run screenshots` for the stills, `npm run record-demo` for the streaming clip — so none of them can drift from the real UI.
 
 ## Engineering decisions I'd defend in an interview
 

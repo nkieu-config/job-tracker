@@ -78,8 +78,12 @@ npm test              # vitest
 npm run test:coverage # vitest with per-file coverage thresholds
 npm run eval          # AI eval suites (needs GEMINI_API_KEY)
 npm run screenshots   # regenerate the README screenshots via Playwright
+npm run record-demo   # re-record the streaming GIF (Playwright + ffmpeg, one Gemini call)
+npm run social-preview # rebuild the 1280×640 GitHub social card from dashboard.png
 npm run seed          # populate the demo account (server must be running)
 ```
+
+The three image scripts drive a running app, so start one first — `npm run build && npm run start` gives the clean, dev-overlay-free rendering the committed images were captured from. `record-demo` additionally needs `ffmpeg` on `PATH` (`brew install ffmpeg`) and a `BETTER_AUTH_URL` that matches the port you serve on, or the demo sign-in is rejected as an untrusted origin.
 
 ## Demo account
 

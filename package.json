@@ -19,6 +19,8 @@
     "postinstall": "prisma generate",
     "seed": "tsx --conditions=react-server scripts/seed.mts",
     "screenshots": "tsx scripts/screenshots.mts",
+    "record-demo": "tsx scripts/record-demo.mts",
+    "social-preview": "tsx scripts/social-preview.mts",
     "delete-user": "tsx --conditions=react-server scripts/delete-user.mts",
     "sweep-rate-limits": "tsx --conditions=react-server scripts/sweep-rate-limits.mts"
   },
