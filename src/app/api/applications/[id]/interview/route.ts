@@ -1,7 +1,6 @@
 import { getSession } from "@/server/get-session";
-import { prisma } from "@/server/prisma";
 import { interviewPrepStream } from "@/server/ai-client";
-import { checkAiRateLimit } from "@/server/rate-limit";
+import { guardAiRequest } from "@/server/ai-guard";
 import { AiError } from "@/lib/errors";
 import {
   abortLinkedTo,
@@ -21,21 +20,12 @@ export async function POST(
   }
 
   const { id } = await params;
-  const application = await prisma.application.findFirst({
-    where: { id, userId: session.user.id },
-    select: { jobDescription: true, role: true },
-  });
-  if (!application) {
-    return new Response("Not found", { status: 404 });
-  }
-  if (!application.jobDescription?.trim()) {
-    return new Response("Add a job description first.", { status: 400 });
-  }
 
-  if (!(await checkAiRateLimit(session.user.id))) {
-    return new Response("AI rate limit reached. Please try again later.", {
-      status: 429,
-    });
+  const guard = await guardAiRequest(id, session.user.id, {
+    verb: "generating interview prep",
+  });
+  if (!guard.ok) {
+    return new Response(guard.denial.message, { status: guard.denial.status });
   }
 
   const abort = abortLinkedTo(request.signal);
@@ -43,8 +33,8 @@ export async function POST(
   let tokens: AsyncIterable<string>;
   try {
     tokens = await interviewPrepStream(
-      application.jobDescription,
-      application.role,
+      guard.jobDescription,
+      guard.application.role,
       abort.signal,
       session.user.id,
     );

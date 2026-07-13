@@ -31,7 +31,11 @@ import {
   saveResumeEmbedding,
   getResumesNeedingEmbedding,
 } from "@/server/data/embeddings";
-import { checkAiRateLimit } from "@/server/rate-limit";
+import {
+  guardAiRequest,
+  requireAiBudget,
+  requireApplicationWithJd,
+} from "@/server/ai-guard";
 
 export type FormState<T = ApplicationInput> = {
   error?: string;
@@ -155,18 +159,11 @@ export async function analyzeApplication(
   const session = await getSession();
   if (!session) redirect("/sign-in");
 
-  const application = await prisma.application.findFirst({
-    where: { id, userId: session.user.id },
+  const guard = await guardAiRequest(id, session.user.id, {
+    verb: "analyzing",
   });
-  if (!application) {
-    return { error: "Application not found." };
-  }
-  if (!application.jobDescription?.trim()) {
-    return { error: "Add a job description before analyzing." };
-  }
-
-  if (!(await checkAiRateLimit(session.user.id))) {
-    return { error: "AI rate limit reached. Please try again later." };
+  if (!guard.ok) {
+    return { error: guard.denial.message };
   }
 
   // The resume read doesn't depend on the analysis, so it runs alongside the
@@ -176,7 +173,7 @@ export async function analyzeApplication(
   let analysis;
   try {
     analysis = await analyzeJobDescription(
-      application.jobDescription,
+      guard.jobDescription,
       session.user.id,
     );
   } catch (err) {
@@ -225,15 +222,17 @@ export async function computeResumeFit(
   const session = await getSession();
   if (!session) redirect("/sign-in");
 
-  const application = await prisma.application.findFirst({
-    where: { id: applicationId, userId: session.user.id },
-  });
-  if (!application) {
-    return { error: "Application not found." };
+  // Not `guardAiRequest`: this action can succeed without calling the model at
+  // all (see the short-circuit below), so the budget check has to come after it.
+  const found = await requireApplicationWithJd(
+    applicationId,
+    session.user.id,
+    "computing fit",
+  );
+  if (!found.ok) {
+    return { error: found.denial.message };
   }
-  if (!application.jobDescription?.trim()) {
-    return { error: "Add a job description before computing fit." };
-  }
+  const { application, jobDescription } = found;
 
   if (!(await hasResumeWithText(session.user.id))) {
     return { error: "Upload a resume with readable text first." };
@@ -242,7 +241,7 @@ export async function computeResumeFit(
   // Nothing to embed means nothing to pay for: skip the AI calls entirely, and
   // don't spend a slice of the user's hourly AI budget on a no-op re-click.
   // A vector is only current if the *same model* produced it from the same text.
-  const jobDescriptionHash = sha256(application.jobDescription);
+  const jobDescriptionHash = sha256(jobDescription);
   const jdEmbeddingIsCurrent =
     application.jdEmbeddingHash === jobDescriptionHash &&
     application.jdEmbeddingModel === EMBEDDING_MODEL;
@@ -252,8 +251,9 @@ export async function computeResumeFit(
     return { success: true };
   }
 
-  if (!(await checkAiRateLimit(session.user.id))) {
-    return { error: "AI rate limit reached. Please try again later." };
+  const denied = await requireAiBudget(session.user.id);
+  if (denied) {
+    return { error: denied.message };
   }
 
   try {
@@ -264,11 +264,7 @@ export async function computeResumeFit(
     const [jdVector, resumeVectors] = await Promise.all([
       jdEmbeddingIsCurrent
         ? null
-        : embedText(
-            application.jobDescription,
-            "RETRIEVAL_QUERY",
-            session.user.id,
-          ),
+        : embedText(jobDescription, "RETRIEVAL_QUERY", session.user.id),
       Promise.all(
         pending.map((resume) =>
           embedDocument(resume.content, "RETRIEVAL_DOCUMENT", session.user.id),

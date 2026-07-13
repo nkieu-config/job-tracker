@@ -1,7 +1,6 @@
 import { getSession } from "@/server/get-session";
-import { prisma } from "@/server/prisma";
 import { tailorBulletsStream } from "@/server/ai-client";
-import { checkAiRateLimit } from "@/server/rate-limit";
+import { aiDenial, guardAiRequest } from "@/server/ai-guard";
 import { AiError } from "@/lib/errors";
 import {
   abortLinkedTo,
@@ -23,30 +22,23 @@ export async function POST(
   const { id } = await params;
 
   // Parsing the body doesn't depend on the lookup, so start it first and await
-  // it once the row is known to exist.
+  // it inside the guard — once the row is known to exist, and still before the
+  // rate limit, so an empty experience costs the user nothing.
   const bodyPromise = request.json().catch(() => ({}));
+  let experience = "";
 
-  const application = await prisma.application.findFirst({
-    where: { id, userId: session.user.id },
-    select: { jobDescription: true },
+  const guard = await guardAiRequest(id, session.user.id, {
+    verb: "tailoring bullets",
+    validate: async () => {
+      const body = (await bodyPromise) as { experience?: string };
+      experience = (body.experience ?? "").toString().trim();
+      return experience
+        ? null
+        : aiDenial("Describe your experience first.", 400);
+    },
   });
-  if (!application) {
-    return new Response("Not found", { status: 404 });
-  }
-  if (!application.jobDescription?.trim()) {
-    return new Response("Add a job description first.", { status: 400 });
-  }
-
-  const body = (await bodyPromise) as { experience?: string };
-  const experience = (body.experience ?? "").toString().trim();
-  if (!experience) {
-    return new Response("Describe your experience first.", { status: 400 });
-  }
-
-  if (!(await checkAiRateLimit(session.user.id))) {
-    return new Response("AI rate limit reached. Please try again later.", {
-      status: 429,
-    });
+  if (!guard.ok) {
+    return new Response(guard.denial.message, { status: guard.denial.status });
   }
 
   const abort = abortLinkedTo(request.signal);
@@ -54,7 +46,7 @@ export async function POST(
   let tokens: AsyncIterable<string>;
   try {
     tokens = await tailorBulletsStream(
-      application.jobDescription,
+      guard.jobDescription,
       experience,
       abort.signal,
       session.user.id,
