@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { emailIsDeliverable } from "@/server/email";
-import { SignInForm } from "@/components/auth/sign-in-form";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 
 export const metadata: Metadata = {
-  title: "Sign in",
+  title: "Reset password",
 };
 
-export default async function SignInPage({
+export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reset?: string }>;
+  searchParams: Promise<{ token?: string; error?: string }>;
 }) {
-  const { reset } = await searchParams;
+  const { token, error } = await searchParams;
+  const validToken = error || !token ? null : token;
 
   return (
     <div className="flex flex-1 items-center justify-center bg-canvas px-6 py-16">
@@ -27,24 +27,21 @@ export default async function SignInPage({
           </Link>
         </div>
         <h1 className="font-display-md text-ink text-center tracking-tight mb-2">
-          Welcome back
+          Set a new password
         </h1>
         <p className="text-center font-sans text-ink-mute mb-8">
-          Sign in to your job tracker.
+          Choose a new password for your account.
         </p>
 
-        <SignInForm
-          passwordWasReset={reset === "1"}
-          canResetPassword={emailIsDeliverable}
-        />
+        <ResetPasswordForm token={validToken} />
 
         <p className="mt-8 text-center font-sans text-body text-ink-mute">
-          Don&apos;t have an account?{" "}
+          Back to{" "}
           <Link
-            href="/sign-up"
+            href="/sign-in"
             className="font-bold text-link-blue hover:text-link-hover hover:underline transition-colors"
           >
-            Sign up
+            Sign in
           </Link>
         </p>
       </div>
