@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/server/get-session";
@@ -5,6 +6,21 @@ import { formatDate } from "@/lib/format";
 import { getApplication } from "@/server/data/applications";
 import { ApplicationForm } from "@/components/applications/application-form";
 import { updateApplication } from "@/actions/applications";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const session = await requireSession();
+  const application = await getApplication(id, session.user.id);
+
+  if (!application) {
+    return { title: "Application not found" };
+  }
+  return { title: `Edit ${application.role} at ${application.company}` };
+}
 
 export default async function EditApplicationPage({
   params,

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/server/get-session";
 import { formatDisplayDate } from "@/lib/format";
@@ -16,6 +17,10 @@ import {
   type BoardApplication,
 } from "@/components/applications/board";
 import { isOneOf } from "@/lib/guards";
+
+export const metadata: Metadata = {
+  title: "Applications",
+};
 
 function parseStatus(value?: string): ApplicationStatus | undefined {
   return isOneOf(APPLICATION_STATUSES, value) ? value : undefined;

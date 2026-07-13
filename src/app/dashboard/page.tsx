@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Sparkles, Plus } from "lucide-react";
 import { requireSession } from "@/server/get-session";
@@ -5,6 +6,10 @@ import { formatDisplayDate } from "@/lib/format";
 import { getStatusCounts, getUpcomingDeadlines } from "@/server/data/applications";
 import { Pipeline } from "@/components/dashboard/pipeline";
 import { StatusBadge } from "@/components/applications/status-badge";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 function Metric({
   label,

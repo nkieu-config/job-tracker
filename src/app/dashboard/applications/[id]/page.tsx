@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/server/get-session";
@@ -15,6 +16,21 @@ import { AnalyzeButton } from "@/components/applications/analyze-button";
 import { ComputeFitButton } from "@/components/applications/compute-fit-button";
 import { TailorBullets } from "@/components/applications/tailor-bullets";
 import { InterviewPrep } from "@/components/applications/interview-prep";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const session = await requireSession();
+  const application = await getApplication(id, session.user.id);
+
+  if (!application) {
+    return { title: "Application not found" };
+  }
+  return { title: `${application.role} at ${application.company}` };
+}
 
 export default async function ApplicationDetailPage({
   params,

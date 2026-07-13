@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { prisma } from "@/server/prisma";
 
 // Also the hard cap on how many versions a user may create: past this point
@@ -33,9 +34,9 @@ export function getResumeTexts(userId: string) {
   });
 }
 
-export function getResumeVersion(id: string, userId: string) {
+export const getResumeVersion = cache((id: string, userId: string) => {
   return prisma.resumeVersion.findFirst({ where: { id, userId } });
-}
+});
 
 export function getResumeFileUrl(id: string, userId: string) {
   return prisma.resumeVersion.findFirst({

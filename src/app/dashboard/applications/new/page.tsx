@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ApplicationForm } from "@/components/applications/application-form";
 import { createApplication } from "@/actions/applications";
+
+export const metadata: Metadata = {
+  title: "New application",
+};
 
 export default function NewApplicationPage() {
   return (

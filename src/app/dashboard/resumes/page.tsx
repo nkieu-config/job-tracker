@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/server/get-session";
 import { FileText } from "lucide-react";
 import { formatDisplayDate } from "@/lib/format";
 import { getResumeSummaries } from "@/server/data/resumes";
 import { ResumeUploadForm } from "@/components/resumes/resume-upload-form";
+
+export const metadata: Metadata = {
+  title: "Resumes",
+};
 
 export default async function ResumesPage() {
   const session = await requireSession();

@@ -1,9 +1,22 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/server/get-session";
 import { formatDisplayDate } from "@/lib/format";
 import { getResumeVersion } from "@/server/data/resumes";
 import { DeleteResumeButton } from "@/components/resumes/delete-resume-button";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const session = await requireSession();
+  const resume = await getResumeVersion(id, session.user.id);
+
+  return { title: resume ? resume.label : "Resume not found" };
+}
 
 export default async function ResumeDetailPage({
   params,

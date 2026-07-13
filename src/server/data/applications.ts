@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { prisma } from "@/server/prisma";
 import {
   APPLICATION_STATUSES,
@@ -65,9 +66,9 @@ export function getApplications(
   });
 }
 
-export function getApplication(id: string, userId: string) {
+export const getApplication = cache((id: string, userId: string) => {
   return prisma.application.findFirst({ where: { id, userId } });
-}
+});
 
 export async function getStatusCounts(
   userId: string,

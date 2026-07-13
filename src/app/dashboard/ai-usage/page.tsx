@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Activity, Sparkles } from "lucide-react";
 import { requireSession } from "@/server/get-session";
@@ -7,6 +8,10 @@ import { AI_FEATURES, type AiFeature } from "@/server/observability";
 import { isOneOf } from "@/lib/guards";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "AI usage",
+};
 
 const FEATURE_LABELS: Record<AiFeature, string> = {
   analyze: "JD analysis",
