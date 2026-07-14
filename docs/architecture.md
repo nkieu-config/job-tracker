@@ -1,6 +1,32 @@
 # Architecture
 
 How the system is put together, and the reasoning behind the key decisions.
+The constraints that shaped it: one developer, a serverless host (Vercel), a
+free-tier Gemini quota, and a portfolio-scale deployment whose real users are me
+and demo visitors. Several decisions below are direct consequences of those
+constraints.
+
+## Goals and non-goals
+
+### Goals
+
+- Every AI feature is measured before it ships — precision/recall, an ablation,
+  or a judged rubric ([evals/](../evals/)).
+- No secret ever reaches the browser; every entry point independently
+  re-verifies the session and scopes queries by `userId`.
+- One deployable, one database, one `.env` — operable by one person.
+- Sessions revoke immediately (rows in Postgres, not JWTs); resume PDFs are
+  never publicly addressable.
+
+### Non-goals
+
+- OAuth sign-in, OCR of scanned PDFs, and a browser e2e suite — deliberately
+  deferred; tracked in the README's
+  [Honest limitations](../README.md#honest-limitations).
+- Scale beyond portfolio traffic. The hourly AI budget and the `max: 5` pool are
+  sized for tens of users, not thousands, and that is a choice.
+- Multi-model support. One vendor covers generation and embeddings; a provider
+  abstraction would be speculation with a single consumer.
 
 ## System overview
 
@@ -63,6 +89,33 @@ job-tracker/                 # a single Next.js 16 app
 └── scripts/
 ```
 
+## Data model
+
+Eight Prisma models in two groups.
+
+**Auth — owned by Better Auth.** `User`, `Session`, `Account`, `Verification`:
+the standard email/password session tables. Sessions live in Postgres, not in a
+JWT, so a sign-out revokes immediately.
+
+**Domain.**
+
+| Model | Holds | Notes |
+| --- | --- | --- |
+| `Application` | One job in the pipeline: company, role, `status`, deadline, the JD text, and the structured `analysis` JSON | Also carries the JD's `vector(768)` embedding plus the streamed artifacts saved per application — tailored bullets and the interview-prep sheet |
+| `ResumeVersion` | A labeled resume: the private Blob URL, the extracted text, and its `vector(768)` embedding | Resume fit ranks these against `Application.jdEmbedding` |
+| `AiUsage` | One row per model call: feature, model, prompt/output tokens, latency, ok | Cost is **not** stored — the admin page derives it from token counts at read time, so a price change never rewrites history |
+| `RateLimit` | An expiring counter keyed by `key` | Backs both the hourly AI budget and auth throttling; the atomic upsert is covered by an integration test |
+
+`Application` and `ResumeVersion` carry a `userId` and cascade on user delete;
+every query against them is scoped by that `userId` — the same rule
+[Defense-in-depth auth](#defense-in-depth-auth) enforces at the entry points.
+`RateLimit` is the one table keyed by an opaque string rather than a user row,
+because it also throttles sign-in attempts, which happen before a user is known.
+
+Both embedding columns are declared `Unsupported("vector(768)")` — see
+[pgvector via raw SQL](#pgvector-via-raw-sql) for how they are written, indexed,
+and the sharp edge that comes with them.
+
 ## Key decisions
 
 ### Why `src/server/` exists, and why the compiler enforces it
@@ -120,6 +173,25 @@ This started as a separate Express microservice and was later folded into the Ne
 
 The AI code is still isolated **as a module** (`server/ai/`) rather than a service, so the boundary is preserved where it adds value (one place owns the key and the prompts) and dropped where it only added ceremony.
 
+### Why pgvector (and not a dedicated vector store)
+
+Embeddings are queried in exactly one way — rank a user's resume versions against
+one job description — over row counts a single Postgres instance handles
+trivially. A dedicated vector database would add a second system to provision,
+secure, and keep consistent with the relational rows, to answer a query pgvector
+expresses as one SQL statement against the tables the rest of the app already
+uses.
+
+### Why Better Auth
+
+Sessions live as rows in my own Postgres — revocable server-side, scoped by the
+same `userId` as every other table, with no third-party auth service in the
+request path.
+
+<!-- TODO: add the honest one-line reason for Better Auth over NextAuth/Clerk
+     specifically — the actual deciding factor (API shape? docs? owning the
+     session tables?). An interviewer will ask. -->
+
 ### Defense-in-depth auth
 
 A `proxy.ts` (Next 16's renamed middleware) does an optimistic cookie check for fast redirects, but it is **never the only gate**: every page, Server Action, and route handler independently re-checks the session and scopes its queries by `userId`. This design directly addresses CVE-2025-29927, where Next.js middleware could be bypassed entirely — here, bypassing the middleware gains an attacker nothing.
@@ -136,7 +208,9 @@ That index has one sharp edge. Prisma cannot express it — `type: Hnsw` is not 
 
 ### Streaming UX
 
-Bullet tailoring and interview prep stream token-by-token, so the user sees output begin in under a second instead of staring at a spinner for ten.
+Bullet tailoring and interview prep stream token-by-token, so output starts
+appearing as soon as the model produces its first tokens instead of landing all
+at once when generation finishes.
 
 The transport is split from the generation. `server/ai/stream.ts` returns an
 `AsyncIterable<string>` of tokens and throws `AiError` — the same contract
@@ -146,6 +220,20 @@ ask which half of `server/ai` it is talking to. Everything HTTP-shaped lives in
 `ReadableStream`, maps an `AiError` to a status, and appends the end-of-stream
 status frame that lets the browser tell a completed generation from a dropped
 connection — so a truncated result can never be silently saved.
+
+**The wire format.** The response is `text/plain`: raw model tokens, then one
+terminal frame — a NUL sentinel (`\u0000`, a character model output can never
+contain) followed by a JSON status.
+
+```text
+…streamed tokens…\u0000{"ok":true}
+…streamed tokens…\u0000{"ok":false,"error":"The AI response was interrupted before it finished."}
+```
+
+No terminal frame at all means the connection dropped. A failure *before* the
+first token is an ordinary HTTP error instead, with the `AiError` kind choosing
+the status: `config` → 503, `timeout` → 504, and `transport` / `empty` /
+`malformed` / `schema` → 502.
 
 That split is newer than the streaming itself. `stream.ts` used to return
 `Response` objects carrying invented 502/503 statuses — a fossil of the Express
@@ -164,16 +252,44 @@ a `Response`-to-`AiError` adapter that guessed every non-ok status as `transport
 
 Resume PDFs live in a **private** Vercel Blob store and are streamed only through an authenticated, ownership-scoped route handler. The blob URL is never exposed publicly.
 
+## Testing & rollout
+
+The AI layer is tested at two altitudes: unit tests mock the Gemini SDK at the
+module boundary, and the [eval harness](../evals/) measures the real model with
+precision/recall, a controlled ablation, and an LLM judge. Security-critical
+modules — the prompt fence, the admin gate, the AI ownership guard, the PDF page
+cap — carry 100% coverage thresholds in CI. The full breakdown is in the
+[README](../README.md#testing--quality).
+
+Rollout is Vercel shipping `main` once CI passes (lint → typecheck → tests →
+build). Migrations are developed against the Neon `dev` branch and applied to
+`production` with `prisma migrate deploy` — the step-by-step flow, including the
+HNSW caveat above, is in the [deploy guide](deploy.md).
+
 ## Challenges & solutions
 
 | Challenge | Solution |
 | --- | --- |
 | **Prisma 7 dropped the bundled query engine** | Prisma schema + migrations live in `prisma/`; the client generates into `src/generated/` and is configured via `prisma.config.ts`. |
 | **Connection exhaustion in serverless** | On classic Vercel functions each request got its own isolated instance, so every instance opened its own `pg` pool and Postgres ran out of connections (plus TLS/SNI routing issues from a misplaced `-pooler` suffix). The fix at the time was `@neondatabase/serverless` + `@prisma/adapter-neon`, pooling natively over WebSocket. **Since moving to Vercel Fluid compute** — which keeps instances warm and reuses TCP across requests — the app is back on `pg` + `@prisma/adapter-pg`, which is what Neon now recommends for Fluid. Exhaustion is held off by three things the original setup lacked: `attachDatabasePool` from `@vercel/functions` (drains idle connections before an instance suspends), a `max: 5` cap per instance, and the PgBouncer `-pooler` endpoint fronting it all. |
-| **Better Auth pulled a broken kysely** | kysely `0.29.2` stopped re-exporting a symbol the adapter imports; pinned to `0.28.17` via an npm `override`. |
+| **Better Auth pulled a broken Kysely** | Kysely `0.29.2` stopped re-exporting a symbol the adapter imports; pinned to `0.28.17` via an npm `override`. |
 | **Next 16 renamed `middleware` → `proxy`** | Read the bundled Next docs and adopted the new `proxy.ts` convention — which also reinforced the decision to keep auth checks in the data layer. |
 | **AI output can't be trusted** | The Zod round-trip (schema-out, validate-in) makes off-schema Gemini responses an explicit, recoverable failure instead of a page crash. |
 | **Resume privacy** | Private Blob store + authenticated streaming route; no public URLs. |
+
+## Open questions
+
+- **The HNSW index survives by convention, not by a guard.** "Delete the
+  `DROP INDEX` line by hand" works for one careful person and no further. A CI
+  check that fails when a pending migration drops
+  `resume_version_embedding_hnsw_idx` would turn the convention into something
+  the repo enforces.
+- **The tailoring eval is still a 3-of-6 sample.** Completing it needs a paid
+  Gemini key or another day's free-tier quota.
+- **No browser e2e suite yet.** The Playwright helpers that drive the automated
+  screenshots are the foundation; the specs on top of them aren't written.
+- **OAuth sign-in** is on the roadmap and would add the first auth path that
+  isn't email/password.
 
 ## Related docs
 
