@@ -1,24 +1,16 @@
 # Deploy guide — Vercel
 
-Production runs as a single Next.js app on Vercel. The AI calls (Gemini) run
-in-process inside Server Actions and Route Handlers, so there is no second
-service to deploy.
-
-| Service | Host | Env file (local) |
-|---------|------|------------------|
-| Next.js app | Vercel | `.env` |
+Production is a single Next.js app on Vercel, configured by one local `.env`.
+The AI calls (Gemini) run in-process inside Server Actions and Route Handlers,
+so there is no second service to deploy.
 
 `GEMINI_API_KEY` is a server-only Vercel env var — never exposed to the browser.
-
----
 
 ## Prerequisites
 
 1. Push to GitHub (includes `vercel.json`).
 2. Neon Postgres + Vercel Blob configured.
 3. Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
-
----
 
 ## Step 1 — Vercel project settings (one-time)
 
@@ -28,7 +20,7 @@ repository root (default). `vercel.json` sets the install/build commands.
 ### Environment variables
 
 | Variable | Notes |
-|----------|-------|
+| --- | --- |
 | `GEMINI_API_KEY` | Google AI Studio key (server-only) |
 | `DATABASE_URL` | Neon **pooled** endpoint — what the app uses at runtime |
 | `DIRECT_URL` | Neon **direct** endpoint — used only by `prisma migrate` |
@@ -48,8 +40,6 @@ Redeploy Vercel after env changes (new deployments only pick up new vars).
 > The app must use the pooled URL. `DIRECT_URL` opens one unpooled connection per
 > serverless invocation and exhausts Postgres `max_connections` under load.
 
----
-
 ## Step 2 — Database migrations
 
 Migrations flow through the Neon branches (see
@@ -62,7 +52,11 @@ with the `production` branch's direct URL (kept as a comment in `.env`):
 DIRECT_URL=<production-direct-url> npx prisma migrate deploy
 ```
 
----
+> **Read the generated migration before applying it.** Prisma cannot express the
+> HNSW index on the embedding columns, so a generated migration may contain a
+> `DROP INDEX` for `resume_version_embedding_hnsw_idx`. Delete that line — the
+> background is in
+> [architecture.md](./architecture.md#pgvector-via-raw-sql).
 
 ## Step 3 — Seed the demo account (optional)
 
@@ -85,16 +79,14 @@ After the first deploy this is automated: the
 nightly (20:00 UTC). It needs one repository secret, `PROD_DIRECT_URL` — the
 `production` branch's direct connection string.
 
----
-
 ## Step 4 — Smoke test
 
 See [manual-qa.md](./manual-qa.md) sections 7–9 on the live URL.
-
----
 
 ## Local development
 
 ```bash
 npm run dev      # http://localhost:3000
 ```
+
+Full local setup, env vars and scripts: [setup.md](./setup.md).

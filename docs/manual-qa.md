@@ -4,7 +4,7 @@ A click-through checklist to confirm the app works end to end. Run it against
 either target:
 
 - **Production:** your live Vercel URL.
-- **Local:** `npm run dev`, then open http://localhost:3000.
+- **Local:** `npm run dev`, then open <http://localhost:3000>.
 
 > Tip: the demo account is pre-populated, so you can test everything without
 > entering data yourself. Some steps need env vars — the table notes which.
@@ -14,7 +14,7 @@ either target:
 | Feature | Needs |
 | --- | --- |
 | Sign in / sign up, applications CRUD, dashboard | `DATABASE_URL`, `DIRECT_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` |
-| Resume upload + “View PDF” | `BLOB_READ_WRITE_TOKEN` |
+| Resume upload + "View PDF" | `BLOB_READ_WRITE_TOKEN` |
 | Analyze, Resume fit, Tailor bullets (AI) | `GEMINI_API_KEY` |
 
 ## Checklist
@@ -27,30 +27,36 @@ either target:
 | 4 | Click **Applications** in the top nav | nav | Full list; the status filter chips work |
 | 5 | Open **Acme Corp · Senior Backend Engineer** | list | Detail page with status, deadline, job description |
 | 6 | In **Skills analysis**, read the result | detail | Required skills tagged ✓ matched / ✗ missing vs the resume |
-| 7 | Click **Re-analyze** _(AI)_ | detail | Button shows “Analyzing…”, then the analysis refreshes (no error) |
-| 8 | Click **Compute resume fit** _(AI)_ | detail | Shows “Embedding…”, then resume versions ranked by **match %** |
+| 7 | Click **Re-analyze** _(AI)_ | detail | Button shows "Analyzing…", then the analysis refreshes (no error) |
+| 8 | Click **Compute resume fit** _(AI)_ | detail | Shows "Embedding…", then resume versions ranked by **match %** |
 | 9 | In **Tailor resume bullets**, type a sentence and click **Tailor bullets** _(AI)_ | detail | Text **streams in** live, bullet by bullet |
 | 10 | Go to **Resumes → upload a small PDF** _(Blob)_ | `/dashboard/resumes` | Upload succeeds; the extracted text shows on the resume page; **View PDF** opens the file |
 | 11 | Create a new application | `/dashboard/applications/new` | Saved; appears in the list and dashboard counts update |
-| 12 | Edit then delete that application | detail → Edit / Delete | Changes persist; delete asks to confirm, then it’s gone |
+| 12 | Edit then delete that application | detail → Edit / Delete | Changes persist; delete asks to confirm, then it's gone |
 | 13 | Click **Sign out** | nav | Back to sign-in |
 | 14 | While signed out, open `/dashboard` directly | URL bar | Redirected to `/sign-in` (auth protection) |
 
 ## If something fails
 
-- **An AI button errors** → check `GEMINI_API_KEY` is set (locally in `.env`; in prod, in Vercel env vars). In production, redeploy after changing env vars.
+- **An AI button errors** → check `GEMINI_API_KEY` is set (locally in `.env`; in
+  prod, in Vercel env vars). In production, redeploy after changing env vars.
 - **Upload or View PDF fails** → `BLOB_READ_WRITE_TOKEN` is missing; set it and
   redeploy.
-- **Hit “AI rate limit reached”** → expected after 30 AI actions/hour per user;
+- **Hit "AI rate limit reached"** → expected after 30 AI actions/hour per user;
   wait or use a different account.
 - **Env var added but still failing** → Vercel only applies new env vars to
-  *new* deployments. Redeploy (Deployments → ⋯ → Redeploy).
+  _new_ deployments. Redeploy (Deployments → ⋯ → Redeploy).
 
 ## Automated checks (no clicking)
 
 ```bash
 npm run lint        # code style
 npm run typecheck   # types
-npm test            # unit/component tests (250)
+npm test            # unit/component tests
 npm run build       # production build
 ```
+
+## Related docs
+
+- [Local setup & scripts](setup.md)
+- [Deploy guide](deploy.md)
