@@ -112,7 +112,7 @@ Every image on this page is generated from the seeded demo by Playwright — `np
 - **Vector search in the database, not the app.** Embeddings live in Postgres `vector(768)` columns behind an HNSW index; resume ranking is one raw-SQL cosine-distance query, not an application-side similarity loop.
 - **AI behind one boundary.** All Gemini access lives in a single `server/ai/` module called only from server code, so the API key never reaches the client and there is exactly one place to meter, validate and mock.
 - **Streaming end to end.** Gemini's chunk iterator is piped straight into a Route Handler `ReadableStream` → browser, with an end-of-stream status frame so a dropped connection can never silently persist a truncated result.
-- **Production paper cuts, actually fixed.** Serverless connection pooling via the Neon driver adapter, a broken transitive kysely release pinned with an npm override, Prisma 7's engine removal, Next 16's `middleware` → `proxy` rename — the full list with solutions is in [docs/architecture.md](docs/architecture.md#challenges--solutions).
+- **Production paper cuts, actually fixed.** Serverless connection exhaustion (now a capped `pg` pool, drained before each Fluid instance suspends), a broken transitive kysely release pinned with an npm override, Prisma 7's engine removal, Next 16's `middleware` → `proxy` rename — the full list with solutions is in [docs/architecture.md](docs/architecture.md#challenges--solutions).
 
 ### AI eval scorecard
 
