@@ -1,285 +1,382 @@
 # Design system
 
-The visual language behind Job Tracker's UI: an aubergine-forward, Slack-inspired
-palette with a single chromatic accent, pill buttons, and a restrained humanist
-type scale. Every token below is implemented verbatim in
-[`src/app/globals.css`](../src/app/globals.css) as a Tailwind v4 `@theme` block,
-so this document and the stylesheet share one source of truth.
+Job Tracker's visual language: a deep aubergine primary, a single blue link
+accent, pill buttons at 90px radius, and pastel-mesh gradients that carry depth
+without shadows.
 
-## How to read this
+Two files are the source of truth, and everything below points at one of them:
 
-- Tokens are written in reference form — `{colors.primary}`, `{rounded.pill}`,
-  `{typography.body-md}` — and map one-to-one onto the CSS custom properties in
-  `globals.css`: `{colors.primary}` → `--color-primary`, `{rounded.pill}` →
-  `--radius-pill`, `{colors.canvas-lavender}` → `--color-canvas-lavender`, and so
-  on.
-- This spec began as a design-language study of a Slack-inspired marketing site.
-  Job Tracker adopts its **token system** (color, type, spacing, radius) and its
-  **component primitives** (pill buttons, cards, inputs, links). Sections that
-  describe marketing-only surfaces — pricing tiers, hero gradient bands, a
-  multi-column footer — document that source language, not pages this app ships;
-  they stay here as the reference the theme was derived from.
+- [`src/app/globals.css`](../src/app/globals.css) — the Tailwind v4 `@theme`
+  block (color and type tokens, the pill radius, the entrance animation) plus
+  the `@utility` classes for display type and the pastel-mesh gradient.
+- [`src/components/ui/`](../src/components/ui/) — the shared class helpers that
+  keep forms and status colors consistent across screens.
+
+The system was adapted from a design-language study of a Slack-inspired
+marketing site; what was adopted, what was changed, and why is recorded under
+[Deliberate departures](#deliberate-departures) and [Provenance](#provenance).
 
 ## Overview
 
-The design language centers on a deep aubergine primary (`{colors.primary}`) — the
-system's most enduring visual asset — applied as the dominant button color, the
-footer band, the featured surface, and the brand wordmark. Around that aubergine
-the system stages an unusually delicate ecosystem: cream-lavender hero canvases
-with soft pastel-mesh gradients (peachy oranges, lavenders, dusty greens) that
-pulse behind floating product UI mockups, with the actual interface chrome
-rendered in fine detail at 3:2 aspect.
+The system centers on a deep aubergine (`--color-primary` `#4a154b`) — applied
+as the dominant button fill, the closing band on the landing page, and the brand
+wordmark. Around that aubergine sits a deliberately delicate ecosystem: cream and
+lavender canvases, a pastel-mesh gradient wash behind the hero, and product UI
+rendered on top of it rather than inside chrome.
 
-Typography splits between two proprietary humanist sans families. The display tier
-runs at 700 weight at sizes 32–64px with negative letter-spacing for tight optical
-density on hero headlines. The UI tier uses the second family at 400–700 with
-slightly relaxed leading (1.55) — body copy reads quietly without competing with
-the aubergine moments.
+Typography is one open-source family, Inter, split across two tiers: a **display
+tier** at 700 weight with negative letter-spacing (32–64px) for headlines and
+statistics, and a **UI tier** (12–18px) that reads quietly under it.
 
-Buttons are pill-shaped at 90px radius with an unusual amount of horizontal
-padding (28–30px), giving them a distinctly comfortable, almost over-padded feel.
-The primary aubergine pill is the only filled button in most contexts; secondary
-actions use a soft lavender pill (`{colors.canvas-lavender}`) which reads as a
-gentler echo of the primary surface. Inline links shift to a saturated blue
-(`{colors.link-blue}`) — the only chromatic departure from the aubergine-and-cream
-world.
+Buttons are pills at 90px radius with an unusual amount of horizontal padding
+(28px on the standard CTA), giving them a comfortable, almost over-padded feel.
+The aubergine pill is the only filled button in most contexts.
 
-**Key Characteristics:**
-- Single aubergine primary (`{colors.primary}`) reused across CTAs, the featured surface, the footer band, and the wordmark — the system's chromatic monotheism.
-- Cream-lavender hero canvas (`{colors.canvas-cream}` / `{colors.canvas-lavender}`) with diffused pastel-mesh atmospheric gradients and floating UI mockups composited above.
-- Pill buttons at `{rounded.pill}` (90px radius) with generous 28–30px horizontal padding — over-padded by SaaS-default standards, deliberately so.
-- Tight negative letter-spacing on display sizes (-0.768px on 64px hero) for editorial-density headlines.
-- Blue inline links (`{colors.link-blue}`) — the only non-aubergine chromatic accent in body type.
-- Pastel-mesh gradient atmospherics: hero bands carry a subtle peach-lavender-dusty-green wash behind them; product UI sits on top, never inside, the gradient.
-- Statistics cards rendered in massive aubergine display type on white — quantitative emphasis through scale alone.
+### Key characteristics
 
-## Colors
+- Single aubergine primary reused across CTAs, the featured surface, the closing
+  band, and the wordmark — the system's chromatic monotheism.
+- Blue inline links (`--color-link-blue`) — the only chromatic departure from
+  aubergine in body type.
+- Pill buttons at `--radius-pill` (90px) on every labeled button and CTA in the
+  app, without exception.
+- Tight negative tracking on display sizes (`-0.768px` at 64px) for
+  editorial-density headlines.
+- The pastel-mesh gradient as the depth language: product UI floats above it, and
+  the gradient does the lifting instead of a shadow.
+- A separate **categorical** status palette for the pipeline — the one deliberate
+  break from the single-accent rule, explained below.
 
-### Brand & Accent
-- **Aubergine** (`{colors.primary}` — `#4a154b`): The primary surface and CTA color. Deep, warm purple with a hint of ruby — used on filled buttons, the featured surface, the footer band, and the brand wordmark.
-- **Aubergine Deep** (`{colors.primary-deep}` — `#481a54`): A near-identical sibling of `{colors.primary}` extracted from a different surface; treat as functionally equivalent.
-- **Aubergine Press** (`{colors.primary-press}` — `#611f69`): Pressed-state lift of the primary, slightly lighter and warmer.
-- **Aubergine Tint** (`{colors.primary-tint}` — `#592466`): Border accent on aubergine-on-aubergine surfaces.
-- **Link Blue** (`{colors.link-blue}` — `#1264a3`): Inline link color — saturated, slightly warm blue. The only chromatic alternative to aubergine in body type.
-- **Link Hover** (`{colors.link-hover}` — `#3860be`): A more saturated blue used on link hover state.
+## Color
+
+Every token here is a `--color-*` custom property in the `@theme` block.
+
+### Brand & accent
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--color-primary` | `#4a154b` | Filled CTAs, featured surfaces, the wordmark |
+| `--color-primary-deep` | `#481a54` | Near-identical sibling; treat as equivalent |
+| `--color-primary-press` | `#611f69` | Hover and pressed state of the primary pill |
+| `--color-primary-tint` | `#592466` | Border accent on aubergine-on-aubergine surfaces |
+| `--color-link-blue` | `#1264a3` | Inline links |
+| `--color-link-hover` | `#3860be` | Link hover |
 
 ### Surface
-- **Canvas White** (`{colors.canvas}` — `#ffffff`): Default content surface.
-- **Canvas Cream** (`{colors.canvas-cream}` — `#f4ede4`): Warm off-white used on hero gradients and feature bands. Adds editorial warmth.
-- **Canvas Lavender** (`{colors.canvas-lavender}` — `#f9f0ff`): Pale lavender tint used as the secondary-button surface and as a soft section band.
-- **Surface Aubergine** (`{colors.surface-aubergine}` — `#4a154b`): The primary aubergine reused as a surface — featured cards, footer, dark feature bands.
-- **Hairline** (`{colors.hairline}` — `#e6e6e6`): 1px borders on cards and table dividers.
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--color-canvas` | `#ffffff` | Default content surface; card fill |
+| `--color-canvas-cream` | `#f4ede4` | Warm off-white; the pastel-mesh base and Kanban column beds (at 50% opacity) |
+| `--color-canvas-lavender` | `#f9f0ff` | Secondary-button fill, feature cards, the sidebar's active item |
+| `--color-canvas-lavender-hover` | `#ebdcf5` | Secondary-surface hover |
+| `--color-canvas-error` | `#fdf0f0` | Error surface |
+| `--color-surface-elev` | `#ffffff` | Elevated surface |
+| `--color-surface-aubergine` | `#4a154b` | The closing CTA band on the landing page |
+| `--color-surface-hover` | `#f5eded` | Hover on neutral surfaces |
+| `--color-hairline` | `#e6e6e6` | 1px card borders and dividers |
+| `--color-hairline-strong` | `#000000` | High-contrast border |
 
 ### Text
-- **Ink** (`{colors.ink}` — `#1d1d1d`): Primary body text on light surfaces. Just shy of pure black.
-- **Ink Mute** (`{colors.ink-mute}` — `#696969`): Secondary text, captions, helper copy.
-- **On Primary** (`{colors.on-primary}` — `#ffffff`): Text on aubergine surfaces and filled CTAs.
-- **On Aubergine Mute** (`{colors.on-aubergine-mute}` — `#d9bdde`): Secondary text on aubergine surfaces — a desaturated mauve that reads as muted-light.
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--color-ink` | `#1d1d1d` | Body text on light surfaces; also the focus ring |
+| `--color-ink-mute` | `#696969` | Secondary text, captions, helper copy |
+| `--color-on-primary` | `#ffffff` | Text on aubergine surfaces and filled CTAs |
+| `--color-on-aubergine-mute` | `#d9bdde` | Secondary text on aubergine surfaces |
 
 ### Semantic
-- **Error** (`{colors.semantic-error}` — `#cc4117`): Form error and destructive-action color.
-- **Success** (`{colors.semantic-success}` — `#007a5a`): Inline success indicators.
+
+Status feedback, never decoration. Each pairs a foreground with a tint.
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--color-semantic-error` | `#cc4117` | Form errors, destructive actions |
+| `--color-semantic-error-tint` | `#fdebea` | Error background |
+| `--color-semantic-error-hover` | `#fad8d6` | Error-surface hover |
+| `--color-semantic-success` | `#007a5a` | Success indicators |
+| `--color-semantic-success-tint` | `#e2f1ea` | Success background |
+| `--color-semantic-warning` | `#d69f12` | Warnings |
+| `--color-semantic-warning-tint` | `#fcf2db` | Warning background |
+
+### Pipeline status — a categorical scale
+
+The five pipeline stages need colors that read as *different*, not as *more or
+less branded*, so they come from Tailwind's palette rather than the aubergine
+system. `STATUS_COLORS` in
+[`src/components/ui/status-colors.ts`](../src/components/ui/status-colors.ts) is
+the single source: one entry per status, each supplying the five surfaces that
+status can appear on (`badge`, `dot`, `fill`, `num`, `seg`).
+
+| Status | Hue | Reads as |
+| --- | --- | --- |
+| `SAVED` | zinc | Not yet acted on |
+| `APPLIED` | blue | In flight |
+| `INTERVIEW` | amber | Live, needs attention |
+| `OFFER` | green | Won |
+| `REJECTED` | red | Closed |
+
+This is the system's one sanctioned break from the single-accent rule — see
+[Deliberate departures](#deliberate-departures).
 
 ## Typography
 
-### Font Family
+One family: **Inter**, loaded by `next/font` in
+[`src/app/layout.tsx`](../src/app/layout.tsx) as `--font-inter` and wired to
+`--font-sans`, falling back to `ui-sans-serif, system-ui`.
 
-The display tier is **Salesforce Avant Garde** — a proprietary humanist sans with broad apertures and a slightly geometric character. When unavailable, fall back to the system font stack (`system-ui, -apple-system, BlinkMacSystemFont`).
+### Display tier
 
-The UI tier is **Salesforce Sans** — a separate proprietary face used for body, captions, and button labels. Same fallback chain.
+Implemented as `@utility` classes in `globals.css`, not as `@theme` variables —
+each bundles size, weight, leading and tracking so a headline can never be set
+at default tracking by accident.
 
-Both faces are proprietary and not freely available. Job Tracker substitutes **Inter** (open-source via Google Fonts) at matching weights for both display and body — Inter is the closest open analogue across both tiers, and `--font-sans` in `globals.css` wires it up.
+| Utility | Size | Weight | Line height | Tracking | Use |
+| --- | --- | --- | --- | --- | --- |
+| `font-display-xxl` | 64px | 700 | 1.12 | -0.768px | Landing hero headline |
+| `font-display-lg` | 50px | 700 | 1.12 | -0.6px | Statistics numerals |
+| `font-display-md` | 32px | 700 | 1.25 | -0.256px | Page and section titles — the workhorse |
+| `font-display-sm` | 24px | 700 | 1.25 | -0.192px | Compact card titles |
 
-### Hierarchy
+### UI tier
 
-| Token | Size | Weight | Line Height | Letter Spacing | Use |
-|---|---|---|---|---|---|
-| `{typography.display-xxl}` | 64px | 700 | 1.12 | -0.768px | Marketing hero headline |
-| `{typography.display-xl}` | 58px | 600 | 1.25 | -0.464px | Section openers |
-| `{typography.display-lg}` | 50px | 700 | 1.12 | -0.6px | Statistics callouts |
-| `{typography.display-md}` | 32px | 700 | 1.25 | -0.256px | Card / feature titles |
-| `{typography.heading-lg}` | 24px | 700 | 1.33 | -0.096px | Section titles |
-| `{typography.heading-md}` | 22px | 600 | 1.4 | 0 | Sub-section heading |
-| `{typography.heading-sm}` | 18px | 600 | 1.56 | -0.0216px | Compact card title |
-| `{typography.body-lg}` | 18px | 400 | 1.55 | -0.0216px | Marketing body lead |
-| `{typography.body-md}` | 16px | 400 | 1.55 | 0 | Default UI body |
-| `{typography.body-strong}` | 16px | 700 | 1.5 | 0.16px | Emphasized body |
-| `{typography.button-lg}` | 18px | 700 | 1.0 | 0 | Hero pill button label |
-| `{typography.button-md}` | 16px | 700 | 1.38 | 0.2px | Standard pill button label |
-| `{typography.button-cap}` | 14.4px | 700 | 1.0 | 0.144px | Compact pill label |
-| `{typography.caption}` | 14px | 400 | 1.43 | 0.1px | Helper, footnote |
-| `{typography.micro-cap}` | 12px | 700 | 1.0 | 0.96px | All-caps eyebrow |
+`--text-*` tokens in the `@theme` block. This scale is denser than the source
+study's, because app chrome carries more information per screen than a marketing
+page does.
+
+| Token | Size | Use |
+| --- | --- | --- |
+| `--text-title` | 18px | Card titles, primary CTA labels |
+| `--text-body-lg` | 16px | Emphasized body, form fields and labels, button labels |
+| `--text-body` | 14px | Default UI body |
+| `--text-caption` | 13px | Helper text, captions |
+| `--text-fine` | 12px | Fine print, all-caps eyebrows |
 
 ### Principles
-- **Tight tracking on display.** Negative letter-spacing across 32–64px sizes; the proprietary face is wide by default, the negative tracking pulls it into editorial density.
-- **Body at 1.55 leading.** Slightly relaxed for readability without crossing into airy / 1.7+ territory.
-- **Caps for eyebrows.** All eyebrows render uppercase with positive 0.96–0.144px tracking depending on size.
 
-### Note on Font Substitutes
-Use **Inter** (open-source Google Fonts) for both display and UI tiers — Inter at 700 weight with `-0.768px` letter-spacing closely approximates the brand's display behavior. For maximum fidelity, **Lato** is a softer humanist alternative that pairs well at body sizes. Avoid System UI fonts on the body — the subtle warmth disappears at default weights.
+- **Tight tracking on display.** Negative letter-spacing across 24–64px. Without
+  it the headlines read loose and unedited.
+- **Button labels are bold with positive tracking.** `font-bold` plus
+  `tracking-[0.2px]` — the pill's label has to hold its own inside all that
+  padding.
 
-## Layout
+## Layout & spacing
 
-### Spacing System
-- **Base unit**: 8px (with 4 / 12 / 16 / 20 / 24 / 28 sub-tokens for fine vertical rhythm).
-- **Tokens**: `{spacing.xs}` 4px · `{spacing.sm}` 8px · `{spacing.md}` 12px · `{spacing.lg}` 16px · `{spacing.xl}` 20px · `{spacing.xxl}` 24px · `{spacing.huge}` 28px.
-- **Section padding**: 64–96px on marketing surfaces; tightens to 48px on transactional pages.
-- **Card internal padding**: 32px on standard cards; 48px on aubergine band cards.
+- **Scale.** Tailwind's default 4px scale. The app does not define spacing
+  tokens; consistency comes from reusing the component patterns below.
+- **Card padding.** `p-8` (32px) on standard cards; `p-6` (24px) on the compact
+  lavender feature cards.
+- **Section padding.** `py-24` (96px) on the landing page's bands; dashboard
+  screens tighten to card-level spacing.
+- **Kanban columns.** `p-2` beds on `bg-canvas-cream/50`, so the cards inside
+  read as the content and the column as furniture.
 
-### Grid & Container
-- Marketing pages center in a ~1240px container with edge-bleeding pastel-mesh gradients escaping the container.
-- Multi-column layouts collapse 4-up → 2-up → 1-up at 992 / 768 breakpoints.
-- Statistics row: 3-column grid with massive 50px aubergine display numerals.
+## Elevation & depth
 
-### Whitespace Philosophy
-The pastel-mesh gradients fill most of the negative space on marketing pages — sections feel expansive without being literally empty. On transactional pages the gradients drop, and whitespace reverts to traditional 48px-section breathing room.
-
-## Elevation & Depth
+Depth is carried by the gradient first and shadows second.
 
 | Level | Treatment | Use |
-|---|---|---|
+| --- | --- | --- |
 | 0 | Flat | Default surface |
-| 1 | `box-shadow: rgba(0,0,0,0.1) 0 5px 20px 0` | Floating buttons on hero |
-| 2 | `box-shadow: rgba(0,0,0,0.1) 0 0 32px 0` | Product UI mockup composites |
-| 3 | `box-shadow: rgba(0,0,0,0.2) 0 1px 10px 0` | Toast / notification chrome |
-| 4 | `box-shadow: rgb(97,31,105) 0 0 0 1px inset` | Aubergine inset border (button focus, special chrome) |
+| 1 | `shadow-sm` | Standard cards — a hairline border does most of the work |
+| 2 | `shadow-[0_5px_20px_rgba(0,0,0,0.1)]` | The landing hero's primary CTA |
+| 3 | `shadow-md` / `shadow-lg` | Dialogs and floating chrome |
 
-### Decorative Depth
-The depth language is the **pastel-mesh gradient** — peach, lavender, dusty green stops blurred together at large radii to create soft atmospheric backdrops behind product UI screenshots. The gradient is the "depth without shadows" flavor: the eye perceives the product mockup as floating above a luminous backdrop without any literal lift.
+**The pastel-mesh gradient** (`bg-pastel-mesh` in `globals.css`) is the signature:
+a `--color-canvas-cream` base under three radial-gradient stops — lavender at the
+top-right, peach at the bottom-left, dusty green at the bottom-right — blurred at
+large radii. It creates a luminous backdrop that makes the product screenshots
+above it read as floating, with no literal lift. It is used on the landing page
+only ([`src/app/page.tsx`](../src/app/page.tsx)); transactional screens drop the
+gradient for a plain canvas.
 
-## Shapes
+## Shape
 
-### Border Radius Scale
+Only one radius is tokenized: `--radius-pill` (90px), used by every button. The
+rest of the system uses Tailwind's default radius scale, assigned by role:
 
-| Token | Value | Use |
-|---|---|---|
-| `{rounded.xs}` | 2px | Hairline tags, status pills (rare) |
-| `{rounded.sm}` | 4px | Form inputs |
-| `{rounded.md}` | 8px | Compact card chrome, video frames |
-| `{rounded.lg}` | 12px | Mid-size cards, secondary surface |
-| `{rounded.xl}` | 16px | Feature cards |
-| `{rounded.xxl}` | 48px | Stat badge backdrops |
-| `{rounded.pill}` | 90px | All buttons |
+| Class | Radius | Role |
+| --- | --- | --- |
+| `rounded-pill` | 90px | Every labeled button and CTA |
+| `rounded-full` | ∞ | Status badges, dots, avatars, progress-bar fills |
+| `rounded-2xl` | 16px | Standard cards — the page-level container |
+| `rounded-xl` | 12px | Compact surfaces: list rows, Kanban columns and cards, sidebar items, streamed-output panels, loading skeletons |
+| `rounded-lg` | 10px | Inline message banners, icon-only affordances, the landing page's miniature mock cards |
+| `rounded-md` | 8px | Logo tiles |
+| `rounded-sm` | 4px | Form inputs |
 
-### Photography Geometry
-The system uses **product UI screenshots** more than photography. UI mockups sit on top of pastel-mesh gradients at roughly 4:3 aspect, with no shadow but with the gradient providing the "lift" the eye expects. Real photography, when it appears, is treated as full-bleed inside `{rounded.xl}` containers.
+Two clarifications the table can't carry:
+
+- **The pill rule covers labeled buttons only.** The board's icon-only drag handle
+  ([`board.tsx`](../src/components/applications/board.tsx)) is square-ish on
+  purpose — a 90px pill around a 16px grip icon reads as a lozenge, not a handle.
+- **The landing page's product mock scales its radii down.** A real card is
+  `rounded-2xl` and a real sidebar item `rounded-xl`; inside the miniature mock
+  they are `rounded-lg` and `rounded-md`. The mock is a scale model, so its
+  corners scale too.
+
+## Motion
+
+- `--animate-rise` — 0.5s `cubic-bezier(0.22, 1, 0.36, 1)`: fade in while
+  translating up 10px. The system's single entrance animation.
+- It is disabled under `prefers-reduced-motion: reduce`.
 
 ## Components
 
 ### Buttons
 
-**`button-primary-pill`** — the dominant CTA system-wide.
-- Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.button-md}`, padding `14px 28px`, rounded `{rounded.pill}` 90px.
-- Pressed state `button-primary-pill-pressed` shifts background to `{colors.primary-press}`.
+**Primary pill** — the dominant CTA.
 
-**`button-secondary-pill`** — the soft lavender alternative.
-- Background `{colors.canvas-lavender}`, text `{colors.ink}`, padding `10px 30px`, same pill geometry. Used as the second action beside the primary aubergine pill.
+```text
+bg-primary text-on-primary font-bold text-body-lg tracking-[0.2px]
+py-3.5 px-7 rounded-pill hover:bg-primary-press transition-colors
+```
 
-**`button-outline-aubergine`** — outline variant on white surfaces.
-- Background `{colors.canvas}`, text `{colors.primary}`, 2px solid `{colors.primary}` border, same pill shape.
+14px × 28px padding, exactly as the source study specifies. The hover state
+shifts the fill to `--color-primary-press`. The landing hero's version scales up
+(`sm:text-title`, `px-9`) and adds the level-2 shadow plus a `hover:scale-105`.
 
-**`button-outline-on-aubergine`** — outline on aubergine canvas.
-- Background `{colors.surface-aubergine}` (transparent over the surface), text `{colors.on-primary}`, 2px solid `{colors.on-primary}` border, same pill shape.
+**Secondary pill** — the paired action beside the primary.
 
-### Cards & Containers
+```text
+bg-canvas-lavender text-primary border-2 border-primary font-bold
+py-3 px-6 rounded-pill
+```
 
-**`card-standard`** — standard content card.
-- Background `{colors.canvas}`, padding `{spacing.xxl}+` (32px), rounded `{rounded.xl}` 16px, 1px `{colors.hairline}` border. Title in `{typography.heading-lg}`, body in `{typography.body-md}`, CTA pinned to bottom as `button-primary-pill`.
+Lavender fill with an aubergine border and label. It reads as a gentler echo of
+the primary while staying clearly actionable.
 
-**`card-featured`** — the inverted aubergine featured card.
-- Background `{colors.surface-aubergine}`, text `{colors.on-primary}`, otherwise identical to `card-standard`. The aubergine fill is the signature featured-surface choice.
+### Cards
 
-**`card-feature-cream`** — feature explanation card on the cream track.
-- Background `{colors.canvas-cream}`, text `{colors.ink}`, rounded `{rounded.xl}`, padding 32px.
+- **Standard** — `rounded-2xl border border-hairline bg-canvas p-8 shadow-sm`.
+  Title in `font-display-sm` or `font-display-md`, body in `--text-body`.
+- **Feature (lavender)** — `rounded-xl border border-hairline bg-canvas-lavender
+  p-6`. Used for the AI-feature explanations.
+- **Aubergine band** — `bg-surface-aubergine text-on-primary py-24 px-6
+  md:px-12`. The full-bleed closing CTA on the landing page; white type, and the
+  page's signature moment.
 
-**`card-aubergine-band`** — large horizontal band card with aubergine fill, often containing the closing CTA of a marketing page.
-- Background `{colors.surface-aubergine}`, text `{colors.on-primary}`, padding 48px, rounded `{rounded.xl}` 16px.
+### Inputs
 
-**`card-stat`** — statistics callout card.
-- Background `{colors.canvas}`, text `{colors.primary}` rendered in `{typography.display-lg}` (50px aubergine numeral). Holds a single percentage/number with a small caption underneath.
+`inputClass` in
+[`src/components/ui/form-styles.ts`](../src/components/ui/form-styles.ts) is the
+only place a field is styled:
 
-### Inputs & Forms
+```text
+rounded-sm border border-hairline bg-canvas px-3 py-2.5 text-body-lg text-ink
+focus:border-primary focus:ring-1 focus:ring-primary
+```
 
-**`text-input`** — standard form field.
-- Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body-md}`, padding `10px 12px`, rounded `{rounded.sm}` 4px, 1px `{colors.hairline}` border.
+`labelClass` pairs with it. Every form in the app imports both — a field styled
+by hand is a bug.
 
-### Navigation
+### Inline message banner
 
-**`nav-bar-light`** — top nav across marketing pages.
-- Background `{colors.canvas}`, text `{colors.ink}`, padding `{spacing.lg} {spacing.xxl}`. Logo wordmark on the left, nav items center, two pill buttons on the right (`button-secondary-pill` for "Sign In", `button-primary-pill` for the primary CTA).
+One shape for every inline message the app shows — auth errors, form validation,
+the upload failure, the stale-analysis warning:
 
-### Pills, Tags, and Chips
+```text
+rounded-lg px-4 py-3 text-body font-medium
+```
 
-**`pill-cap-shade`** — small all-caps pill used as an eyebrow above section titles.
-- Background `{colors.canvas-cream}`, text `{colors.ink}`, type `{typography.micro-cap}`, padding `4px 12px`, rounded `{rounded.pill}`.
+The surface picks the meaning: `bg-canvas-error` / `--color-semantic-error` for
+failures, `bg-semantic-warning-tint` for warnings, `bg-canvas-lavender` for
+neutral status. Errors carry `role="alert"`, status messages `role="status"`.
 
-### Signature Components
+### Status badge
 
-**Pastel-Mesh Gradient Backdrop** — peach (`#fff0e6`-ish) + lavender (`#e9d8ff`) + dusty green stops blurred together behind hero bands. Implemented as a CSS radial-gradient stack, not a single image. Provides depth/luminosity without literal shadows.
+A soft pill using the `badge` entry of `STATUS_COLORS` — tinted background, dark
+text of the same hue. The dashboard pipeline reuses the same record's `dot`,
+`fill`, `num` and `seg` entries, so a status can never be one color on the board
+and another on the funnel.
 
-**Floating Product UI Mockup** — product screenshots framed in `{rounded.lg}` (12px) containers, positioned above the pastel-mesh gradient with no border or shadow. The gradient does the lifting.
+### Links
 
-**Aubergine Footer Band** — marketing pages close with a full-bleed `card-aubergine-band` containing a closing CTA in white type. The band height is generous and reads as the page's signature.
+`--color-link-blue`, underlined on hover. On aubergine surfaces links render in
+`--color-on-primary` with a persistent underline.
 
-**`link-on-light`** — inline links in body copy on light surfaces.
-- Text `{colors.link-blue}` rendered in `{typography.body-md}`. No underline by default; underline appears on hover via the link-hover behavior.
+### Focus ring
 
-**`link-on-aubergine`** — links inside aubergine surfaces.
-- Text `{colors.on-primary}` with persistent underline.
+A system-wide accessibility rule in `globals.css` that the source study has no
+equivalent for:
 
-**`footer-aubergine`** — site-wide footer.
-- Background `{colors.surface-aubergine}`, text `{colors.on-primary}` rendered in `{typography.caption}`, padding `{spacing.huge}+ {spacing.xxl}` (32px 24px). Holds link groups in `{colors.on-aubergine-mute}`, social icons, and a small legal/copyright row at the bottom.
+```css
+:focus-visible:not(input):not(textarea):not(select) {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px var(--color-canvas);
+}
+```
+
+A `currentColor` ring would be white-on-white on the aubergine-filled buttons.
+An ink ring separated from the element by a white halo stays visible on light
+surfaces and aubergine ones alike.
+
+## Responsive behavior
+
+Tailwind's default breakpoints. The pattern in practice:
+
+- Type steps down below `sm`: the hero CTA drops from `--text-title` to
+  `--text-body-lg`, and pill padding tightens from `py-3.5 px-7` to
+  `py-2.5 px-5`.
+- Buttons go full-width (`w-full sm:w-auto`) on the landing page's mobile layout.
+- Multi-column grids collapse to a single column; the Kanban board scrolls
+  horizontally rather than reflowing.
+
+**Touch targets.** The over-padded pill geometry lands buttons at roughly 52px
+tall and form fields at 44px — meeting the 44×44 CSS-pixel target of WCAG 2.5.5
+(Target Size, AAA). This is why pill padding is not a free parameter.
 
 ## Do's and Don'ts
 
 ### Do
-- Reserve `{colors.primary}` aubergine for filled CTAs, the featured surface, and the closing aubergine band — it's the system's chromatic monotheism.
-- Use `{rounded.pill}` (90px) for every button across the system — never a rounded-rectangle button.
-- Pair display tiers with negative letter-spacing (`-0.768px` at 64px); the proprietary face needs the tracking pull.
-- Compose hero bands with pastel-mesh gradient backdrop + floating product UI mockup; the gradient is the depth.
-- Use `{colors.link-blue}` for inline links — it's the only chromatic departure from aubergine and is part of the voice.
+
+- Reserve aubergine for filled CTAs, the featured surface, and the closing band —
+  one filled aubergine button per viewport.
+- Use `rounded-pill` for every labeled button and CTA.
+- Set headlines with a `font-display-*` utility so tracking comes along with the
+  size.
+- Import `inputClass` / `labelClass` for every form field.
+- Take pipeline colors from `STATUS_COLORS`, never by hand.
 
 ### Don't
-- Don't add a third accent color to the system — the aubergine + blue link combination is exhaustive.
-- Don't shrink button padding below `14px 28px` — the over-padded pill is part of the feel.
-- Don't render display tiers at default tracking (0) — without negative letter-spacing the headlines read loose and unedited.
-- Don't put product UI screenshots inside cards — they sit ABOVE the pastel-mesh gradient, never inside chrome.
-- Don't use aubergine for body text — it's a surface and CTA color, not a type color at body sizes.
-- Don't replace the pill shape with a square button anywhere.
 
-## Responsive Behavior
+- Don't add a fourth color family. Aubergine, link-blue, and the semantic/status
+  scales are the whole system.
+- Don't use aubergine for body text — it is a surface and CTA color.
+- Don't shrink pill padding: the geometry is what keeps touch targets compliant.
+- Don't set a size with `text-sm` / `text-xs` — reach for a `--text-*` token, so
+  a change to the scale reaches every surface.
+- Don't render display type at default tracking.
+- Don't put product screenshots inside card chrome on the landing page — they sit
+  above the pastel-mesh gradient, never inside it.
+- Don't reach for a shadow where the gradient or a hairline border will do.
 
-### Breakpoints
+## Deliberate departures
 
-| Name | Width | Key Changes |
-|---|---|---|
-| Wide | ≥ 1440px | Full-bleed pastel-mesh hero; 4-up grids |
-| Desktop | 1024–1440px | Default content max-width; 4-up grids |
-| Tablet | 768–1023px | Grids 2-up; product UI mockups crop to focal panel |
-| Mobile | < 768px | Grids 1-up; hamburger nav; display-xxl drops 64 → 40px |
+Where Job Tracker diverges from the source study, and why. These are choices, not
+drift:
 
-### Touch Targets
-- Pill buttons hit ≥ 48×48px due to the over-padded geometry. WCAG AAA compliant.
-- Form fields stay at the 44px minimum height.
+| Departure | Why |
+| --- | --- |
+| **A categorical status palette** breaks the study's "never add a third accent" rule | Five pipeline stages must be *distinguishable*, not *branded*. Ranking them by how aubergine they are would encode a meaning the data doesn't have. Confined to `STATUS_COLORS`, so it can't leak into brand surfaces. |
+| **A denser UI type scale** (12–18px) instead of the study's 14–18px marketing scale | A dashboard row carries more information per line than a marketing paragraph. The display tier was kept verbatim; only the body tier tightened. |
+| **The secondary pill gained an aubergine border and label** | The study's flat lavender pill on a white card had too little edge definition to read as a button in a dense UI. |
+| **Radius and spacing use Tailwind's default scales** rather than the study's custom token sets | The study's values survive (32px card padding, 16px card radius); expressing them through Tailwind's scale means one system to learn, not two. Only `--radius-pill` needed a token, because 90px has no Tailwind equivalent. |
+| **Marketing-only inventory was dropped** — pricing tiers, statistics rows, photography treatment, the multi-column footer | The app has no surface for them. |
+| **A focus-ring rule was added** | The study never contended with aubergine-filled buttons, where a `currentColor` ring disappears. |
 
-### Collapsing Strategy
-- Display tiers stair-step 64 → 50 → 32 → 28 → 24 across breakpoints.
-- Pastel-mesh gradients re-tile on mobile to prevent the wash from disappearing entirely.
-- Floating product UI mockups crop to the most actionable inner panel on mobile.
-- Multi-column grids stair-step 4 → 2 → 1; the aubergine featured surface stays distinguished.
-- Top nav collapses to hamburger below 768px; menu inherits canvas color.
+## Provenance
 
-### Image Behavior
-Product UI mockups use `srcset` for desktop / tablet / mobile crops; the mobile crop centers on the most actionable inner panel rather than scaling the whole composite down.
-
-## Iteration Guide
-
-1. Focus on ONE component at a time.
-2. Reference component names and tokens directly (`{colors.primary}`, `{button-primary-pill}-pressed`, `{rounded.pill}`).
-3. Add new variants as separate entries.
-4. Default body to `{typography.body-md}`; reserve `{typography.body-lg}` for marketing leads.
-5. Keep aubergine scarce — one filled aubergine button per viewport.
-6. Pair every hero band with the pastel-mesh gradient backdrop; bare-canvas heroes read as off-brand.
+This system was adapted from a design-language study of a Slack-inspired
+marketing site: the aubergine palette, the cream and lavender canvases, the 90px
+pill, the pastel-mesh gradient, and the display-typography rules all come from
+there. Its two proprietary faces (Salesforce Avant Garde for display, Salesforce
+Sans for UI) are substituted with **Inter**, the closest open analogue across both
+tiers. Everything the app actually ships is listed above and lives in
+`globals.css` — this document describes the system as built, not the study it
+came from.
 
 ## Related docs
 
