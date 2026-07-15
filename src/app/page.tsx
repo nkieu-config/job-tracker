@@ -1,39 +1,31 @@
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  Briefcase,
-  FileText,
-  Sparkles,
-  Target,
-  MessagesSquare,
-} from "lucide-react";
+import Image from "next/image";
+import { Sparkles, Target, MessagesSquare } from "lucide-react";
 import { DemoButton } from "@/components/auth/demo-button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SkipLink } from "@/components/ui/skip-link";
+import { Reveal } from "@/components/ui/reveal";
 
-const MOCK_COLUMNS = [
+const METRICS = [
   {
-    label: "Saved",
-    dot: "bg-zinc-400",
-    cards: [{ role: "Platform Engineer", company: "Initech" }],
+    value: "4",
+    label: "AI features",
+    hint: "every one measured, not just shipped",
   },
   {
-    label: "Applied",
-    dot: "bg-blue-500",
-    cards: [
-      { role: "Frontend Engineer", company: "Hooli" },
-      { role: "Full-stack Developer", company: "Pied Piper" },
-    ],
+    value: "250+",
+    label: "Automated tests",
+    hint: "plus a 3-suite AI eval harness",
   },
   {
-    label: "Interview",
-    dot: "bg-amber-500",
-    cards: [{ role: "Backend Engineer", company: "Aviato" }],
+    value: "+8.3",
+    label: "Points of recall",
+    hint: "from the semantic-matching layer",
   },
   {
-    label: "Offer",
-    dot: "bg-green-500",
-    cards: [{ role: "Software Engineer", company: "Raviga" }],
+    value: "768-d",
+    label: "Vector embeddings",
+    hint: "pgvector cosine ranking, HNSW index",
   },
 ];
 
@@ -126,62 +118,59 @@ export default function Home() {
               <div className="w-3 h-3 rounded-full bg-semantic-warning-tint border border-semantic-warning"></div>
               <div className="w-3 h-3 rounded-full bg-semantic-success-tint border border-semantic-success"></div>
             </div>
-            <div className="flex gap-6 bg-canvas p-4 text-left md:p-8">
-              <div className="hidden md:flex w-44 shrink-0 flex-col gap-2 border-r border-hairline pr-6">
-                <div className="flex items-center gap-3 px-3 py-2 rounded-md text-ink-mute text-body font-medium">
-                  <LayoutDashboard size={16} aria-hidden="true" /> Overview
-                </div>
-                <div className="flex items-center gap-3 px-3 py-2 rounded-md bg-canvas-lavender text-primary font-bold text-body">
-                  <Briefcase size={16} aria-hidden="true" /> Applications
-                </div>
-                <div className="flex items-center gap-3 px-3 py-2 text-ink-mute text-body font-medium">
-                  <FileText size={16} aria-hidden="true" /> Resumes
-                </div>
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-4">
-                <h2 className="font-display-sm text-ink">Applications</h2>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                  {MOCK_COLUMNS.map((column) => (
-                    <div key={column.label} className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2 px-1">
-                        <span
-                          className={`h-2 w-2 rounded-full ${column.dot}`}
-                          aria-hidden="true"
-                        />
-                        <span className="text-fine font-bold uppercase tracking-wider text-ink-mute">
-                          {column.label}
-                        </span>
-                      </div>
-                      <div className="flex min-h-28 flex-col gap-2 rounded-xl bg-canvas-cream/50 p-2">
-                        {column.cards.map((card, i) => (
-                          <div
-                            key={card.role}
-                            className={`rounded-lg border border-hairline bg-canvas px-3 py-2 shadow-sm ${
-                              column.label === "Interview" && i === 0
-                                ? "rotate-2 border-primary shadow-[0_8px_20px_rgba(74,21,75,0.15)]"
-                                : ""
-                            }`}
-                          >
-                            <p className="truncate text-fine font-bold text-ink">
-                              {card.role}
-                            </p>
-                            <p className="truncate text-fine text-ink-mute">
-                              {card.company}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <Image
+              src="/landing/board-light.png"
+              alt="The Job Tracker application board, with roles grouped into Saved, Applied, Interview and Offer columns"
+              width={2560}
+              height={1600}
+              className="block h-auto w-full dark:hidden"
+            />
+            <Image
+              src="/landing/board-dark.png"
+              alt=""
+              aria-hidden="true"
+              width={2560}
+              height={1600}
+              className="hidden h-auto w-full dark:block"
+            />
+          </div>
+        </section>
+
+        <section className="bg-canvas-lavender px-6 py-20 md:px-12">
+          <div className="mx-auto w-full max-w-5xl">
+            <Reveal className="mx-auto max-w-2xl text-center">
+              <h2 className="font-display-md text-ink">
+                Not just AI features — measured ones
+              </h2>
+              <p className="mt-3 font-sans text-body-lg leading-relaxed text-ink-mute">
+                Every model call is evaluated, not assumed. The rule this
+                project held to: an AI feature that isn&rsquo;t measured
+                doesn&rsquo;t ship.
+              </p>
+            </Reveal>
+            <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
+              {METRICS.map((metric, i) => (
+                <Reveal key={metric.label} delay={i * 80} className="h-full">
+                  <div className="flex h-full flex-col gap-1 rounded-2xl border border-hairline bg-canvas p-6 text-center shadow-sm">
+                    <span className="font-display-md text-primary tabular-nums">
+                      {metric.value}
+                    </span>
+                    <span className="font-sans text-body font-bold text-ink">
+                      {metric.label}
+                    </span>
+                    <span className="font-sans text-caption leading-snug text-ink-mute">
+                      {metric.hint}
+                    </span>
+                  </div>
+                </Reveal>
+              ))}
             </div>
           </div>
         </section>
 
         <section id="features" className="scroll-mt-24 bg-canvas px-6 py-24 md:px-12">
           <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-12">
-            <div className="max-w-2xl text-center">
+            <Reveal className="max-w-2xl text-center">
               <h2 className="font-display-lg text-ink">
                 Your job hunt, with an AI copilot
               </h2>
@@ -189,23 +178,22 @@ export default function Home() {
                 Four AI features built on Gemini and pgvector do the tedious
                 parts, so you can focus on interviews.
               </p>
-            </div>
+            </Reveal>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {FEATURES.map((feature) => (
-                <div
-                  key={feature.title}
-                  className="flex flex-col gap-4 rounded-2xl border border-hairline bg-canvas-lavender p-8"
-                >
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-on-primary">
-                    <feature.icon size={22} aria-hidden="true" />
-                  </span>
-                  <h3 className="font-sans text-title font-bold text-ink">
-                    {feature.title}
-                  </h3>
-                  <p className="font-sans text-body-lg leading-relaxed text-ink-mute">
-                    {feature.body}
-                  </p>
-                </div>
+              {FEATURES.map((feature, i) => (
+                <Reveal key={feature.title} delay={i * 100} className="h-full">
+                  <div className="flex h-full flex-col gap-4 rounded-2xl border border-hairline bg-canvas-lavender p-8">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-on-primary">
+                      <feature.icon size={22} aria-hidden="true" />
+                    </span>
+                    <h3 className="font-sans text-title font-bold text-ink">
+                      {feature.title}
+                    </h3>
+                    <p className="font-sans text-body-lg leading-relaxed text-ink-mute">
+                      {feature.body}
+                    </p>
+                  </div>
+                </Reveal>
               ))}
             </div>
           </div>
