@@ -6,6 +6,8 @@ import { isAdminEmail } from "@/server/admin";
 import { getAiUsageStats, type FeatureStat } from "@/server/data/ai-usage";
 import { AI_FEATURES, type AiFeature } from "@/server/observability";
 import { isOneOf } from "@/lib/guards";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const dynamic = "force-dynamic";
 
@@ -46,11 +48,11 @@ function Tile({
   hint: string;
 }) {
   return (
-    <div className="rounded-2xl border border-hairline bg-canvas p-6 shadow-sm">
+    <Card className="p-6 shadow-sm">
       <p className="text-caption font-sans font-medium text-ink-mute">{label}</p>
       <p className="mt-2 font-display-md text-primary tabular-nums">{value}</p>
       <p className="mt-1 text-caption font-sans text-ink-mute">{hint}</p>
-    </div>
+    </Card>
   );
 }
 
@@ -109,16 +111,14 @@ export default async function AiUsagePage() {
       </div>
 
       {stats.totalCalls === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline bg-canvas p-12 text-center shadow-sm">
-          <Sparkles size={24} className="text-primary" aria-hidden="true" />
-          <p className="font-sans text-body-lg font-bold text-ink">
-            No AI calls recorded yet
-          </p>
-          <p className="font-sans text-body text-ink-mute">
-            Analyze a job description, compute a resume fit, or tailor bullets —
-            each call is metered and will appear here.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Sparkles size={24} className="text-primary" aria-hidden="true" />}
+          title="No AI calls recorded yet"
+          className="p-12 shadow-sm"
+        >
+          Analyze a job description, compute a resume fit, or tailor bullets —
+          each call is metered and will appear here.
+        </EmptyState>
       ) : (
         <>
           <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">

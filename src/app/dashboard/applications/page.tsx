@@ -17,6 +17,12 @@ import {
   type BoardApplication,
 } from "@/components/applications/board";
 import { isOneOf } from "@/lib/guards";
+import { buttonClass } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  SegmentedControl,
+  filterChipClass,
+} from "@/components/ui/segmented-control";
 
 export const metadata: Metadata = {
   title: "Applications",
@@ -79,36 +85,24 @@ export default async function ApplicationsPage({
           Applications
         </h1>
         <div className="flex items-center gap-3">
-          <nav
-            aria-label="View"
-            className="flex rounded-pill border border-hairline bg-canvas p-1"
-          >
-            <Link
-              href="/dashboard/applications"
-              aria-current={view === "board" ? "page" : undefined}
-              className={`rounded-pill px-4 py-1.5 font-sans text-body font-bold transition-colors ${
-                view === "board"
-                  ? "bg-primary text-on-primary"
-                  : "text-ink hover:bg-canvas-lavender"
-              }`}
-            >
-              Board
-            </Link>
-            <Link
-              href="/dashboard/applications?view=list"
-              aria-current={view === "list" ? "page" : undefined}
-              className={`rounded-pill px-4 py-1.5 font-sans text-body font-bold transition-colors ${
-                view === "list"
-                  ? "bg-primary text-on-primary"
-                  : "text-ink hover:bg-canvas-lavender"
-              }`}
-            >
-              List
-            </Link>
-          </nav>
+          <SegmentedControl
+            ariaLabel="View"
+            items={[
+              {
+                label: "Board",
+                href: "/dashboard/applications",
+                active: view === "board",
+              },
+              {
+                label: "List",
+                href: "/dashboard/applications?view=list",
+                active: view === "list",
+              },
+            ]}
+          />
           <Link
             href="/dashboard/applications/new"
-            className="inline-flex items-center justify-center bg-primary text-on-primary font-sans font-bold text-body-lg tracking-[0.2px] py-2.5 px-5 rounded-pill transition-colors hover:bg-primary-press whitespace-nowrap"
+            className={buttonClass()}
           >
             New application
           </Link>
@@ -117,7 +111,7 @@ export default async function ApplicationsPage({
 
       {view === "board" ? (
         applications.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-hairline p-10 text-center text-body-lg font-sans text-ink-mute bg-canvas">
+          <EmptyState className="mt-4">
             No applications yet.{" "}
             <Link
               href="/dashboard/applications/new"
@@ -126,7 +120,7 @@ export default async function ApplicationsPage({
               Add one
             </Link>
             .
-          </div>
+          </EmptyState>
         ) : (
           <div className="flex flex-col gap-2">
             <ApplicationsBoard applications={boardApplications} />
@@ -150,11 +144,7 @@ export default async function ApplicationsPage({
                 <Link
                   key={f.label}
                   href={href}
-                  className={`rounded-pill px-4 py-2 text-body font-bold font-sans transition-colors ${
-                    active
-                      ? "bg-primary text-on-primary"
-                      : "bg-canvas text-ink border border-hairline hover:bg-canvas-lavender"
-                  }`}
+                  className={filterChipClass({ active })}
                 >
                   {f.label}
                 </Link>
@@ -163,7 +153,7 @@ export default async function ApplicationsPage({
           </div>
 
           {applications.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-dashed border-hairline p-10 text-center text-body-lg font-sans text-ink-mute bg-canvas">
+            <EmptyState className="mt-4">
               {query ? (
                 <>No applications match “{query}”.</>
               ) : (
@@ -179,7 +169,7 @@ export default async function ApplicationsPage({
                   .
                 </>
               )}
-            </div>
+            </EmptyState>
           ) : (
             <ul className="mt-4 flex flex-col gap-3">
               {applications.map((app) => (

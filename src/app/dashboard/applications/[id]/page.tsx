@@ -8,6 +8,10 @@ import { getResumeText, getResumeTextMeta } from "@/server/data/resumes";
 import { storedJdAnalysisSchema } from "@/lib/schemas/jd-analysis";
 import { matchSkills } from "@/lib/skills";
 import { fitBand } from "@/components/ui/fit-score";
+import { buttonClass } from "@/components/ui/button";
+import { cardClass } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Badge, badgeClass } from "@/components/ui/badge";
 import { getResumeFitScores } from "@/server/data/embeddings";
 import { Sparkles } from "lucide-react";
 import { StatusBadge } from "@/components/applications/status-badge";
@@ -98,7 +102,10 @@ export default async function ApplicationDetailPage({
           <div className="flex w-full sm:w-auto items-center gap-2">
             <Link
               href={`/dashboard/applications/${application.id}/edit`}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center bg-canvas-lavender text-ink font-sans font-bold text-body tracking-[0.144px] py-2.5 px-5 rounded-pill transition-colors hover:bg-canvas-lavender-hover"
+              className={buttonClass({
+                variant: "secondary",
+                className: "flex-1 sm:flex-none",
+              })}
             >
               Edit
             </Link>
@@ -109,7 +116,7 @@ export default async function ApplicationDetailPage({
         </div>
       </div>
 
-      <dl className="grid gap-4 rounded-2xl border border-hairline bg-canvas p-8 sm:grid-cols-2">
+      <dl className={cardClass("grid gap-4 p-8 sm:grid-cols-2")}>
         <div>
           <dt className="text-body font-sans font-medium text-ink-mute">
             Status
@@ -192,11 +199,11 @@ export default async function ApplicationDetailPage({
             </Link>
           </div>
         ) : !analysis ? (
-          <p className="rounded-2xl border border-dashed border-hairline p-8 text-center font-sans text-body-lg text-ink-mute bg-canvas">
+          <EmptyState className="p-8">
             Not analyzed yet — run “Analyze job description”.
-          </p>
+          </EmptyState>
         ) : (
-          <div className="flex flex-col gap-6 rounded-2xl border border-hairline bg-canvas p-8">
+          <div className={cardClass("flex flex-col gap-6 p-8")}>
             <div>
               <p className="text-body-lg font-sans text-ink">
                 {analysis.summary}
@@ -224,17 +231,14 @@ export default async function ApplicationDetailPage({
               <ul className="mt-3 flex flex-wrap gap-2">
                 {analysis.requiredSkills.map((skill) => {
                   const matched = gap?.matched.includes(skill);
-                  const cls =
+                  const tone =
                     resumes.length === 0
-                      ? "bg-hairline text-ink"
+                      ? "neutral"
                       : matched
-                        ? "bg-semantic-success-tint text-semantic-success"
-                        : "bg-semantic-error-tint text-semantic-error";
+                        ? "success"
+                        : "error";
                   return (
-                    <li
-                      key={skill}
-                      className={`rounded-full px-3 py-1 text-body font-sans font-bold ${cls}`}
-                    >
+                    <li key={skill} className={badgeClass({ tone, size: "md" })}>
                       {skill}
                       {resumes.length > 0 && (matched ? " ✓" : " ✗")}
                     </li>
@@ -257,7 +261,7 @@ export default async function ApplicationDetailPage({
                   {analysis.niceToHave.map((skill) => (
                     <li
                       key={skill}
-                      className="rounded-full bg-hairline px-3 py-1 text-body font-sans font-bold text-ink"
+                      className={badgeClass({ tone: "neutral", size: "md" })}
                     >
                       {skill}
                     </li>
@@ -311,11 +315,11 @@ export default async function ApplicationDetailPage({
             </p>
           </div>
         ) : fitScores.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-hairline p-8 text-center font-sans text-body-lg text-ink-mute bg-canvas">
+          <EmptyState className="p-8">
             {resumes.some((r) => r.hasText)
               ? "No fit scores yet — run “Compute resume fit” to rank your resumes against this JD."
               : "Upload a resume with readable text, then compute fit."}
-          </p>
+          </EmptyState>
         ) : (
           <div className="flex flex-col gap-3">
             <ul className="flex flex-col gap-3">
@@ -334,15 +338,13 @@ export default async function ApplicationDetailPage({
                     </Link>
                     <div className="flex shrink-0 items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-none border-hairline pt-3 sm:pt-0">
                       {i === 0 && fitScores.length > 1 && (
-                        <span className="rounded-sm bg-canvas-lavender px-2 py-1 text-fine font-sans font-bold text-primary">
+                        <Badge tone="primary" size="sm">
                           Best match
-                        </span>
+                        </Badge>
                       )}
-                      <span
-                        className={`rounded-full px-3 py-1 text-fine font-sans font-bold ${band.className}`}
-                      >
+                      <Badge tone={band.tone} size="sm">
                         {band.label}
-                      </span>
+                      </Badge>
                       <span className="font-display-md text-ink tabular-nums">
                         {Math.round(fit.score * 100)}%
                       </span>

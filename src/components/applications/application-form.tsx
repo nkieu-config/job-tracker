@@ -7,6 +7,7 @@ import {
   APPLICATION_STATUSES,
   STATUS_LABELS,
 } from "@/lib/schemas/application";
+import { Button, buttonClass } from "@/components/ui/button";
 import { inputClass, labelClass } from "@/components/ui/form-styles";
 import type { FormState } from "@/actions/applications";
 
@@ -146,16 +147,12 @@ export function ApplicationForm({
       )}
 
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="inline-flex items-center justify-center bg-primary text-on-primary font-sans font-bold text-body-lg tracking-[0.2px] py-3.5 px-7 rounded-pill transition-colors hover:bg-primary-press disabled:opacity-60"
-        >
+        <Button type="submit" size="lg" disabled={pending}>
           {pending ? "Saving…" : submitLabel}
-        </button>
+        </Button>
         <Link
           href={cancelHref}
-          className="inline-flex items-center justify-center bg-canvas-lavender text-ink font-sans font-bold text-body-lg tracking-[0.2px] py-3.5 px-7 rounded-pill transition-colors hover:bg-canvas-lavender-hover"
+          className={buttonClass({ variant: "secondary", size: "lg" })}
         >
           Cancel
         </Link>

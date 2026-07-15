@@ -6,6 +6,9 @@ import { formatDisplayDate } from "@/lib/format";
 import { getStatusCounts, getUpcomingDeadlines } from "@/server/data/applications";
 import { Pipeline } from "@/components/dashboard/pipeline";
 import { StatusBadge } from "@/components/applications/status-badge";
+import { buttonClass } from "@/components/ui/button";
+import { Card, cardClass } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -25,7 +28,7 @@ function Metric({
   hint: string;
 }) {
   return (
-    <div className="rounded-2xl border border-hairline bg-canvas p-8 shadow-sm">
+    <Card className="p-8 shadow-sm">
       <p className="text-body font-sans font-medium text-ink-mute">
         {label}
       </p>
@@ -39,7 +42,7 @@ function Metric({
         />
       </div>
       <p className="mt-3 text-body font-sans text-ink-mute">{hint}</p>
-    </div>
+    </Card>
   );
 }
 
@@ -75,7 +78,7 @@ export default async function DashboardPage() {
         </div>
         <Link
           href="/dashboard/applications/new"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary text-on-primary font-sans font-bold text-body-lg tracking-[0.2px] py-3.5 px-7 rounded-pill transition-colors hover:bg-primary-press whitespace-nowrap"
+          className={buttonClass({ size: "lg", className: "w-full sm:w-auto" })}
         >
           <Plus size={18} aria-hidden="true" />
           New application
@@ -83,7 +86,7 @@ export default async function DashboardPage() {
       </div>
 
       {total === 0 ? (
-        <div className="flex flex-col gap-6 rounded-2xl border border-hairline bg-canvas p-8 shadow-sm">
+        <div className={cardClass("flex flex-col gap-6 p-8 shadow-sm")}>
           <div>
             <h2 className="font-display-sm text-ink">Welcome to your Job Tracker!</h2>
             <p className="mt-2 font-sans text-body-lg text-ink-mute">Follow these 3 simple steps to let AI power your job search.</p>
@@ -150,9 +153,7 @@ export default async function DashboardPage() {
           Upcoming deadlines
         </h2>
         {upcoming.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-hairline p-8 text-center font-sans text-body-lg text-ink-mute bg-canvas">
-            No upcoming deadlines.
-          </p>
+          <EmptyState className="p-8">No upcoming deadlines.</EmptyState>
         ) : (
           <ul className="flex flex-col gap-3">
             {upcoming.map((app) => (

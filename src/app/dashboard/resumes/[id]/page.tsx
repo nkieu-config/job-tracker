@@ -5,6 +5,8 @@ import { requireSession } from "@/server/get-session";
 import { formatDisplayDate } from "@/lib/format";
 import { getResumeVersion } from "@/server/data/resumes";
 import { DeleteResumeButton } from "@/components/resumes/delete-resume-button";
+import { buttonClass } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export async function generateMetadata({
   params,
@@ -55,7 +57,10 @@ export default async function ResumeDetailPage({
                 href={`/api/resumes/${resume.id}/file`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 sm:flex-none inline-flex items-center justify-center bg-canvas-lavender text-ink font-sans font-bold text-body tracking-[0.144px] py-2.5 px-5 rounded-pill transition-colors hover:bg-canvas-lavender-hover whitespace-nowrap"
+                className={buttonClass({
+                  variant: "secondary",
+                  className: "flex-1 sm:flex-none",
+                })}
               >
                 View PDF
               </a>
@@ -76,9 +81,9 @@ export default async function ResumeDetailPage({
             {resume.content}
           </pre>
         ) : (
-          <p className="mt-4 rounded-2xl border border-dashed border-hairline p-8 text-center font-sans text-body-lg text-ink-mute bg-canvas">
+          <EmptyState className="mt-4 p-8">
             No text could be extracted (the PDF may be a scanned image).
-          </p>
+          </EmptyState>
         )}
       </section>
     </div>
