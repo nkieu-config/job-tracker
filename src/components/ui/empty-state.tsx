@@ -4,11 +4,13 @@ export function EmptyState({
   icon,
   title,
   children,
+  action,
   className,
 }: {
   icon?: React.ReactNode;
   title?: React.ReactNode;
   children?: React.ReactNode;
+  action?: React.ReactNode;
   className?: string;
 }) {
   return (
@@ -25,6 +27,7 @@ export function EmptyState({
       {children && (
         <div className="font-sans text-body-lg text-ink-mute">{children}</div>
       )}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }

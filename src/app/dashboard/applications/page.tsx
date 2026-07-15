@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Briefcase } from "lucide-react";
 import { requireSession } from "@/server/get-session";
 import { formatDisplayDate } from "@/lib/format";
 import { getApplications } from "@/server/data/applications";
@@ -111,15 +112,23 @@ export default async function ApplicationsPage({
 
       {view === "board" ? (
         applications.length === 0 ? (
-          <EmptyState className="mt-4">
-            No applications yet.{" "}
-            <Link
-              href="/dashboard/applications/new"
-              className="font-bold text-link-blue underline-offset-4 hover:underline"
-            >
-              Add one
-            </Link>
-            .
+          <EmptyState
+            className="mt-4"
+            icon={
+              <Briefcase size={32} className="text-ink-mute" aria-hidden="true" />
+            }
+            title="No applications yet"
+            action={
+              <Link
+                href="/dashboard/applications/new"
+                className={buttonClass()}
+              >
+                New application
+              </Link>
+            }
+          >
+            Track your first job application — add the role, paste the job
+            description, and let AI do the rest.
           </EmptyState>
         ) : (
           <div className="flex flex-col gap-2">
@@ -153,23 +162,39 @@ export default async function ApplicationsPage({
           </div>
 
           {applications.length === 0 ? (
-            <EmptyState className="mt-4">
-              {query ? (
-                <>No applications match “{query}”.</>
-              ) : (
-                <>
-                  No applications{" "}
-                  {status ? `with status “${STATUS_LABELS[status]}”` : "yet"}.{" "}
+            query ? (
+              <EmptyState className="mt-4">
+                No applications match “{query}”.
+              </EmptyState>
+            ) : (
+              <EmptyState
+                className="mt-4"
+                icon={
+                  <Briefcase
+                    size={32}
+                    className="text-ink-mute"
+                    aria-hidden="true"
+                  />
+                }
+                title={
+                  status
+                    ? `No ${STATUS_LABELS[status].toLowerCase()} applications`
+                    : "No applications yet"
+                }
+                action={
                   <Link
                     href="/dashboard/applications/new"
-                    className="font-bold text-link-blue underline-offset-4 hover:underline"
+                    className={buttonClass()}
                   >
-                    Add one
+                    New application
                   </Link>
-                  .
-                </>
-              )}
-            </EmptyState>
+                }
+              >
+                {status
+                  ? "Nothing here with this status yet."
+                  : "Add your first application to get started."}
+              </EmptyState>
+            )
           ) : (
             <ul className="mt-4 flex flex-col gap-3">
               {applications.map((app) => (
