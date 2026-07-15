@@ -12,6 +12,7 @@ import { buttonClass } from "@/components/ui/button";
 import { cardClass } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge, badgeClass } from "@/components/ui/badge";
+import { SectionNav, type Section } from "@/components/applications/section-nav";
 import { getResumeFitScores } from "@/server/data/embeddings";
 import { Sparkles } from "lucide-react";
 import { StatusBadge } from "@/components/applications/status-badge";
@@ -83,6 +84,22 @@ export default async function ApplicationDetailPage({
     application.analyzedAt !== null &&
     resumes.some((r) => r.createdAt > application.analyzedAt!);
 
+  const hasJd = Boolean(application.jobDescription?.trim());
+  const sections: Section[] = [
+    ...(application.jobDescription
+      ? [{ id: "job-description", label: "Job description" }]
+      : []),
+    { id: "skills-analysis", label: "Skills analysis" },
+    { id: "resume-fit", label: "Resume fit" },
+    ...(hasJd
+      ? [
+          { id: "tailor-bullets", label: "Tailor bullets" },
+          { id: "interview-prep", label: "Interview prep" },
+        ]
+      : []),
+    ...(application.notes ? [{ id: "notes", label: "Notes" }] : []),
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -115,6 +132,8 @@ export default async function ApplicationDetailPage({
           </div>
         </div>
       </div>
+
+      <SectionNav sections={sections} />
 
       <dl className={cardClass("grid gap-4 p-8 sm:grid-cols-2")}>
         <div>
@@ -157,7 +176,7 @@ export default async function ApplicationDetailPage({
       </dl>
 
       {application.jobDescription && (
-        <section>
+        <section id="job-description" className="scroll-mt-20">
           <h2 className="text-title font-sans font-bold text-ink">
             Job description
           </h2>
@@ -167,7 +186,7 @@ export default async function ApplicationDetailPage({
         </section>
       )}
 
-      <section className="flex flex-col gap-4">
+      <section id="skills-analysis" className="scroll-mt-20 flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-title font-sans font-bold text-ink">
             Skills analysis
@@ -289,7 +308,7 @@ export default async function ApplicationDetailPage({
         )}
       </section>
 
-      <section className="flex flex-col gap-4">
+      <section id="resume-fit" className="scroll-mt-20 flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-title font-sans font-bold text-ink">
             Resume fit
@@ -364,7 +383,7 @@ export default async function ApplicationDetailPage({
       </section>
 
       {application.jobDescription?.trim() && (
-        <section className="flex flex-col gap-3">
+        <section id="tailor-bullets" className="scroll-mt-20 flex flex-col gap-3">
           <div>
             <h2 className="flex items-center gap-2 text-title font-sans font-bold text-ink">
               <Sparkles size={18} className="text-primary" aria-hidden="true" />
@@ -384,7 +403,7 @@ export default async function ApplicationDetailPage({
       )}
 
       {application.jobDescription?.trim() && (
-        <section className="flex flex-col gap-3">
+        <section id="interview-prep" className="scroll-mt-20 flex flex-col gap-3">
           <div>
             <h2 className="flex items-center gap-2 text-title font-sans font-bold text-ink">
               <Sparkles size={18} className="text-primary" aria-hidden="true" />
@@ -403,7 +422,7 @@ export default async function ApplicationDetailPage({
       )}
 
       {application.notes && (
-        <section>
+        <section id="notes" className="scroll-mt-20">
           <h2 className="text-title font-sans font-bold text-ink">
             Notes
           </h2>
