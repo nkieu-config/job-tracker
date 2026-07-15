@@ -59,8 +59,8 @@ function Tile({
 function FeatureRow({ stat, maxCalls }: { stat: FeatureStat; maxCalls: number }) {
   const pct = maxCalls ? Math.max(Math.round((stat.calls / maxCalls) * 100), 4) : 0;
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-hairline bg-canvas px-5 py-4">
-      <div className="w-40 shrink-0">
+    <div className="flex flex-col gap-3 rounded-xl border border-hairline bg-canvas px-5 py-4 sm:flex-row sm:items-center sm:gap-4">
+      <div className="sm:w-40 sm:shrink-0">
         <p className="font-sans text-body font-bold text-ink">
           {featureLabel(stat.feature)}
         </p>
@@ -76,14 +76,16 @@ function FeatureRow({ stat, maxCalls }: { stat: FeatureStat; maxCalls: number })
           />
         </div>
       </div>
-      <div className="w-24 shrink-0 text-right font-sans text-caption tabular-nums text-ink-mute">
-        {fmtTokens(stat.totalTokens)} tok
-      </div>
-      <div className="w-20 shrink-0 text-right font-sans text-caption tabular-nums text-ink-mute">
-        {Math.round(stat.avgLatencyMs)}ms
-      </div>
-      <div className="w-20 shrink-0 text-right font-sans text-caption font-bold tabular-nums text-ink">
-        {fmtCost(stat.costUsd)}
+      <div className="flex items-center justify-between gap-4 font-sans text-caption tabular-nums text-ink-mute sm:justify-end">
+        <span className="sm:w-24 sm:text-right">
+          {fmtTokens(stat.totalTokens)} tok
+        </span>
+        <span className="sm:w-20 sm:text-right">
+          {Math.round(stat.avgLatencyMs)}ms
+        </span>
+        <span className="font-bold text-ink sm:w-20 sm:text-right">
+          {fmtCost(stat.costUsd)}
+        </span>
       </div>
     </div>
   );
@@ -165,15 +167,15 @@ export default async function AiUsagePage() {
                   key={call.id}
                   className="flex items-center justify-between gap-4 rounded-xl border border-hairline bg-canvas px-5 py-3"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <span
                       className={`h-2 w-2 shrink-0 rounded-full ${call.ok ? "bg-semantic-success" : "bg-semantic-error"}`}
                       aria-hidden="true"
                     />
-                    <span className="font-sans text-body font-bold text-ink">
+                    <span className="shrink-0 font-sans text-body font-bold text-ink">
                       {featureLabel(call.feature)}
                     </span>
-                    <span className="font-sans text-caption text-ink-mute">
+                    <span className="truncate font-sans text-caption text-ink-mute">
                       {call.model}
                     </span>
                   </div>

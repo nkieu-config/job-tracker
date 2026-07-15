@@ -43,12 +43,13 @@
   --hairline: #e6e6e6;
   --hairline-strong: #000000;
 
-  --semantic-error: #cc4117;
+  --semantic-error: #bd3a12;
   --semantic-error-tint: #fdebea;
   --semantic-error-hover: #fad8d6;
+  --semantic-error-solid: #bd3a12;
   --semantic-success: #007a5a;
   --semantic-success-tint: #e2f1ea;
-  --semantic-warning: #d69f12;
+  --semantic-warning: #8a6500;
   --semantic-warning-tint: #fcf2db;
 
   --mesh-1: rgba(233, 216, 255, 0.6);
@@ -92,6 +93,7 @@
     --semantic-error: #f08a6c;
     --semantic-error-tint: #3a1e1a;
     --semantic-error-hover: #4c2820;
+    --semantic-error-solid: #c0442a;
     --semantic-success: #4cbf95;
     --semantic-success-tint: #17302a;
     --semantic-warning: #e6b23c;
@@ -180,6 +182,7 @@
   --color-semantic-error: var(--semantic-error);
   --color-semantic-error-tint: var(--semantic-error-tint);
   --color-semantic-error-hover: var(--semantic-error-hover);
+  --color-semantic-error-solid: var(--semantic-error-solid);
 
   --color-semantic-success: var(--semantic-success);
   --color-semantic-success-tint: var(--semantic-success-tint);
@@ -270,7 +273,12 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-rise {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

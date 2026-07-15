@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { DemoButton } from "@/components/auth/demo-button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { SkipLink } from "@/components/ui/skip-link";
 
 const MOCK_COLUMNS = [
   {
@@ -57,6 +58,7 @@ const FEATURES = [
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-canvas">
+      <SkipLink />
       <header className="flex items-center justify-between px-4 py-4 md:px-12 lg:px-24 bg-canvas z-10 relative">
         <div className="flex items-center gap-2 shrink-0">
           <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center shrink-0">
@@ -94,7 +96,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="flex-1">
+      <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
         <section className="flex flex-col items-center bg-pastel-mesh pt-16 pb-24 px-6 overflow-hidden relative">
           <div className="max-w-[1000px] w-full flex flex-col items-center text-center z-10">
             <h1 className="font-display-xxl text-ink mb-6 max-w-4xl">

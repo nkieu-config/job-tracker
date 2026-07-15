@@ -20,7 +20,7 @@ const VARIANT: Record<ButtonVariant, string> = {
   ghost: "bg-canvas text-ink border border-hairline hover:bg-canvas-lavender",
   danger:
     "bg-semantic-error-tint text-semantic-error hover:bg-semantic-error-hover",
-  "danger-solid": "bg-semantic-error text-on-primary hover:opacity-90",
+  "danger-solid": "bg-semantic-error-solid text-on-primary hover:opacity-90",
 };
 
 const SIZE: Record<ButtonSize, string> = {
