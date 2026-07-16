@@ -66,7 +66,7 @@ export default function Home() {
             Features
           </Link>
           <a
-            href="https://github.com/nkieu-config/job-tracker-app-project"
+            href="https://github.com/nkieu-config/job-tracker"
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-ink"
@@ -105,7 +105,7 @@ export default function Home() {
                   className={buttonClass({ size: "lg" })}
                 />
                 <a
-                  href="https://github.com/nkieu-config/job-tracker-app-project"
+                  href="https://github.com/nkieu-config/job-tracker"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={buttonClass({ variant: "ghost", size: "lg" })}
@@ -249,7 +249,7 @@ export default function Home() {
           <div className="flex flex-col justify-between gap-3 border-t border-hairline pt-6 font-sans text-caption text-ink-mute sm:flex-row">
             <p>© 2026 Job Tracker</p>
             <a
-              href="https://github.com/nkieu-config/job-tracker-app-project"
+              href="https://github.com/nkieu-config/job-tracker"
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium underline-offset-4 transition-colors hover:text-ink hover:underline"
