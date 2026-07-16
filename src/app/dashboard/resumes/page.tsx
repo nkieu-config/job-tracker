@@ -53,7 +53,7 @@ export default async function ResumesPage() {
                   <span className="truncate font-sans font-bold text-ink">
                     {resume.label}
                   </span>
-                  <span className="shrink-0 font-sans text-body text-ink-mute">
+                  <span className="shrink-0 font-mono text-caption tabular-nums text-ink-mute">
                     {formatDisplayDate(resume.createdAt)}
                   </span>
                 </Link>

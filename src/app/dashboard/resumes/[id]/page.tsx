@@ -48,7 +48,10 @@ export default async function ResumeDetailPage({
               {resume.label}
             </h1>
             <p className="mt-2 font-sans text-body-lg text-ink-mute">
-              Added {formatDisplayDate(resume.createdAt)}
+              Added{" "}
+              <span className="font-mono tabular-nums">
+                {formatDisplayDate(resume.createdAt)}
+              </span>
             </p>
           </div>
           <div className="flex w-full sm:w-auto items-center gap-2">
