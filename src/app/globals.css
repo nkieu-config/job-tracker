@@ -18,9 +18,7 @@
   --foreground: #221a26;
 
   --primary: #4a154b;
-  --primary-deep: #481a54;
   --primary-press: #611f69;
-  --primary-tint: #592466;
   --on-primary: #ffffff;
 
   --ink: #221a26;
@@ -30,18 +28,13 @@
   --link-hover: #3860be;
 
   --canvas: #ffffff;
-  --canvas-cream: #f4ede4;
   --canvas-lavender: #f4f0f5;
   --canvas-lavender-hover: #ece6ef;
   --canvas-error: #fdf0f0;
 
-  --surface-elev: #ffffff;
-  --surface-aubergine: #4a154b;
   --surface-hover: #f5eded;
-  --on-aubergine-mute: #d9bdde;
 
   --hairline: #e5dde9;
-  --hairline-strong: #000000;
 
   --semantic-error: #bd3a12;
   --semantic-error-tint: #fdebea;
@@ -51,10 +44,6 @@
   --semantic-success-tint: #e2f1ea;
   --semantic-warning: #8a6500;
   --semantic-warning-tint: #fcf2db;
-
-  --mesh-1: rgba(233, 216, 255, 0.6);
-  --mesh-2: rgba(255, 240, 230, 0.7);
-  --mesh-3: rgba(220, 240, 230, 0.5);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -65,9 +54,7 @@
     --foreground: #e8e5ee;
 
     --primary: #8a4d93;
-    --primary-deep: #6a3372;
     --primary-press: #9a5aa3;
-    --primary-tint: #3a2f45;
     --on-primary: #ffffff;
 
     --ink: #e8e5ee;
@@ -77,18 +64,13 @@
     --link-hover: #9dccf4;
 
     --canvas: #1d1722;
-    --canvas-cream: #211b28;
     --canvas-lavender: #141017;
     --canvas-lavender-hover: #252030;
     --canvas-error: #2b1a1e;
 
-    --surface-elev: #1d1722;
-    --surface-aubergine: #3a1140;
     --surface-hover: #252030;
-    --on-aubergine-mute: #d9bdde;
 
     --hairline: #39323f;
-    --hairline-strong: #ffffff;
 
     --semantic-error: #f08a6c;
     --semantic-error-tint: #3a1e1a;
@@ -98,10 +80,6 @@
     --semantic-success-tint: #17302a;
     --semantic-warning: #e6b23c;
     --semantic-warning-tint: #342a17;
-
-    --mesh-1: rgba(90, 55, 120, 0.4);
-    --mesh-2: rgba(70, 45, 80, 0.35);
-    --mesh-3: rgba(40, 60, 72, 0.3);
   }
 }
 
@@ -112,9 +90,7 @@
   --foreground: #e8e5ee;
 
   --primary: #8a4d93;
-  --primary-deep: #6a3372;
   --primary-press: #9a5aa3;
-  --primary-tint: #3a2f45;
   --on-primary: #ffffff;
 
   --ink: #e8e5ee;
@@ -124,18 +100,13 @@
   --link-hover: #9dccf4;
 
   --canvas: #1d1722;
-  --canvas-cream: #211b28;
   --canvas-lavender: #141017;
   --canvas-lavender-hover: #252030;
   --canvas-error: #2b1a1e;
 
-  --surface-elev: #1d1722;
-  --surface-aubergine: #3a1140;
   --surface-hover: #252030;
-  --on-aubergine-mute: #d9bdde;
 
   --hairline: #39323f;
-  --hairline-strong: #ffffff;
 
   --semantic-error: #f08a6c;
   --semantic-error-tint: #3a1e1a;
@@ -144,10 +115,6 @@
   --semantic-success-tint: #17302a;
   --semantic-warning: #e6b23c;
   --semantic-warning-tint: #342a17;
-
-  --mesh-1: rgba(90, 55, 120, 0.4);
-  --mesh-2: rgba(70, 45, 80, 0.35);
-  --mesh-3: rgba(40, 60, 72, 0.3);
 }
 
 @theme inline {
@@ -159,9 +126,7 @@
 
   /* Slacc Colors */
   --color-primary: var(--primary);
-  --color-primary-deep: var(--primary-deep);
   --color-primary-press: var(--primary-press);
-  --color-primary-tint: var(--primary-tint);
   --color-on-primary: var(--on-primary);
 
   --color-ink: var(--ink);
@@ -171,15 +136,9 @@
   --color-link-hover: var(--link-hover);
 
   --color-canvas: var(--canvas);
-  --color-canvas-cream: var(--canvas-cream);
   --color-canvas-lavender: var(--canvas-lavender);
 
-  --color-surface-elev: var(--surface-elev);
-  --color-surface-aubergine: var(--surface-aubergine);
-  --color-on-aubergine-mute: var(--on-aubergine-mute);
-
   --color-hairline: var(--hairline);
-  --color-hairline-strong: var(--hairline-strong);
 
   --color-semantic-error: var(--semantic-error);
   --color-semantic-error-tint: var(--semantic-error-tint);
@@ -241,13 +200,6 @@ body {
 }
 
 /* Typography Overrides based on Slacc Design */
-@utility font-display-xxl {
-  font-size: 64px;
-  font-weight: 700;
-  line-height: 1.12;
-  letter-spacing: -0.768px;
-}
-
 @utility font-display-lg {
   font-size: 50px;
   font-weight: 700;
@@ -267,15 +219,6 @@ body {
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.192px;
-}
-
-/* Pastel Mesh Gradient */
-@utility bg-pastel-mesh {
-  background-color: var(--color-canvas-cream);
-  background-image:
-    radial-gradient(at 100% 0%, var(--mesh-1) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, var(--mesh-2) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, var(--mesh-3) 0px, transparent 50%);
 }
 
 .reveal {
