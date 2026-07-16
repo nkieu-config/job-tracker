@@ -6,7 +6,7 @@ export default function Loading() {
           <div className="h-9 w-64 animate-pulse rounded bg-hairline" />
           <div className="h-5 w-40 animate-pulse rounded bg-hairline" />
         </div>
-        <div className="h-12 w-44 animate-pulse rounded-pill bg-hairline" />
+        <div className="h-12 w-44 animate-pulse rounded-lg bg-hairline" />
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (

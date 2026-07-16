@@ -6,8 +6,8 @@ export default function Loading() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="h-9 w-48 animate-pulse rounded bg-hairline" />
         <div className="flex items-center gap-3">
-          <div className="h-10 w-40 animate-pulse rounded-pill bg-hairline" />
-          <div className="h-11 w-40 animate-pulse rounded-pill bg-hairline" />
+          <div className="h-10 w-40 animate-pulse rounded-lg bg-hairline" />
+          <div className="h-11 w-40 animate-pulse rounded-lg bg-hairline" />
         </div>
       </div>
       <div className="flex gap-4 overflow-x-auto pb-4">

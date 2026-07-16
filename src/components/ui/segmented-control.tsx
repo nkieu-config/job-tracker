@@ -17,7 +17,7 @@ export function SegmentedControl({
   return (
     <nav
       aria-label={ariaLabel}
-      className="flex rounded-pill border border-hairline bg-canvas p-1"
+      className="flex rounded-lg border border-hairline bg-canvas p-0.5"
     >
       {items.map((item) => (
         <Link
@@ -25,10 +25,10 @@ export function SegmentedControl({
           href={item.href}
           aria-current={item.active ? "page" : undefined}
           className={cn(
-            "rounded-pill px-4 py-1.5 font-sans text-body font-bold transition-colors",
+            "rounded-md px-3 py-1 font-sans text-body font-medium transition-colors",
             item.active
               ? "bg-primary text-on-primary"
-              : "text-ink hover:bg-canvas-lavender",
+              : "text-ink-mute hover:bg-canvas-lavender hover:text-ink",
           )}
         >
           {item.label}
@@ -46,10 +46,10 @@ export function filterChipClass({
   className?: string;
 } = {}): string {
   return cn(
-    "rounded-pill px-4 py-2 font-sans text-body font-bold transition-colors",
+    "rounded-md px-3 py-1.5 font-sans text-caption font-medium transition-colors",
     active
       ? "bg-primary text-on-primary"
-      : "bg-canvas text-ink border border-hairline hover:bg-canvas-lavender",
+      : "bg-canvas text-ink-mute border border-hairline hover:bg-canvas-lavender hover:text-ink",
     className,
   );
 }

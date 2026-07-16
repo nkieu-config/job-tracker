@@ -15,7 +15,7 @@
   color-scheme: light;
 
   --background: #ffffff;
-  --foreground: #1d1d1d;
+  --foreground: #221a26;
 
   --primary: #4a154b;
   --primary-deep: #481a54;
@@ -23,16 +23,16 @@
   --primary-tint: #592466;
   --on-primary: #ffffff;
 
-  --ink: #1d1d1d;
-  --ink-mute: #696969;
+  --ink: #221a26;
+  --ink-mute: #5f5566;
 
   --link-blue: #1264a3;
   --link-hover: #3860be;
 
   --canvas: #ffffff;
   --canvas-cream: #f4ede4;
-  --canvas-lavender: #f9f0ff;
-  --canvas-lavender-hover: #ebdcf5;
+  --canvas-lavender: #f4f0f5;
+  --canvas-lavender-hover: #ece6ef;
   --canvas-error: #fdf0f0;
 
   --surface-elev: #ffffff;
@@ -40,7 +40,7 @@
   --surface-hover: #f5eded;
   --on-aubergine-mute: #d9bdde;
 
-  --hairline: #e6e6e6;
+  --hairline: #e5dde9;
   --hairline-strong: #000000;
 
   --semantic-error: #bd3a12;
@@ -61,7 +61,7 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --background: #16121c;
+    --background: #141017;
     --foreground: #e8e5ee;
 
     --primary: #8a4d93;
@@ -76,15 +76,15 @@
     --link-blue: #7cb8ef;
     --link-hover: #9dccf4;
 
-    --canvas: #2a2335;
+    --canvas: #1d1722;
     --canvas-cream: #211b28;
-    --canvas-lavender: #221c2b;
-    --canvas-lavender-hover: #322a3d;
+    --canvas-lavender: #141017;
+    --canvas-lavender-hover: #252030;
     --canvas-error: #2b1a1e;
 
-    --surface-elev: #2a2335;
+    --surface-elev: #1d1722;
     --surface-aubergine: #3a1140;
-    --surface-hover: #322a3d;
+    --surface-hover: #252030;
     --on-aubergine-mute: #d9bdde;
 
     --hairline: #39323f;
@@ -108,7 +108,7 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --background: #16121c;
+  --background: #141017;
   --foreground: #e8e5ee;
 
   --primary: #8a4d93;
@@ -123,15 +123,15 @@
   --link-blue: #7cb8ef;
   --link-hover: #9dccf4;
 
-  --canvas: #2a2335;
+  --canvas: #1d1722;
   --canvas-cream: #211b28;
-  --canvas-lavender: #221c2b;
-  --canvas-lavender-hover: #322a3d;
+  --canvas-lavender: #141017;
+  --canvas-lavender-hover: #252030;
   --canvas-error: #2b1a1e;
 
-  --surface-elev: #2a2335;
+  --surface-elev: #1d1722;
   --surface-aubergine: #3a1140;
-  --surface-hover: #322a3d;
+  --surface-hover: #252030;
   --on-aubergine-mute: #d9bdde;
 
   --hairline: #39323f;
@@ -153,7 +153,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
+    monospace;
 
   /* Slacc Colors */
   --color-primary: var(--primary);
@@ -194,8 +196,12 @@
   --color-canvas-error: var(--canvas-error);
   --color-surface-hover: var(--surface-hover);
 
-  /* Slacc Layout */
-  --radius-pill: 90px;
+  /* Radius scale — tightened, aubergine-console feel; no 90px pills */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 7px;
+  --radius-xl: 9px;
+  --radius-2xl: 12px;
 
   /* Slacc Type Scale */
   --text-fine: 12px;

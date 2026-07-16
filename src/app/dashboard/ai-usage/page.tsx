@@ -50,7 +50,9 @@ function Tile({
   return (
     <Card className="p-6 shadow-sm">
       <p className="text-caption font-sans font-medium text-ink-mute">{label}</p>
-      <p className="mt-2 font-display-md text-primary tabular-nums">{value}</p>
+      <p className="mt-2 font-display-md font-mono tabular-nums text-primary">
+        {value}
+      </p>
       <p className="mt-1 text-caption font-sans text-ink-mute">{hint}</p>
     </Card>
   );
@@ -64,7 +66,7 @@ function FeatureRow({ stat, maxCalls }: { stat: FeatureStat; maxCalls: number })
         <p className="font-sans text-body font-bold text-ink">
           {featureLabel(stat.feature)}
         </p>
-        <p className="font-sans text-caption text-ink-mute tabular-nums">
+        <p className="font-mono text-caption tabular-nums text-ink-mute">
           {stat.calls} call{stat.calls === 1 ? "" : "s"}
         </p>
       </div>
@@ -76,7 +78,7 @@ function FeatureRow({ stat, maxCalls }: { stat: FeatureStat; maxCalls: number })
           />
         </div>
       </div>
-      <div className="flex items-center justify-between gap-4 font-sans text-caption tabular-nums text-ink-mute sm:justify-end">
+      <div className="flex items-center justify-between gap-4 font-mono text-caption tabular-nums text-ink-mute sm:justify-end">
         <span className="sm:w-24 sm:text-right">
           {fmtTokens(stat.totalTokens)} tok
         </span>
@@ -179,7 +181,7 @@ export default async function AiUsagePage() {
                       {call.model}
                     </span>
                   </div>
-                  <div className="flex shrink-0 items-center gap-4 font-sans text-caption tabular-nums text-ink-mute">
+                  <div className="flex shrink-0 items-center gap-4 font-mono text-caption tabular-nums text-ink-mute">
                     <span>{fmtTokens(call.totalTokens)} tok</span>
                     <span>{Math.round(call.latencyMs)}ms</span>
                   </div>

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Sparkles, Plus } from "lucide-react";
 import { requireSession } from "@/server/get-session";
-import { formatDisplayDate } from "@/lib/format";
+import { formatDisplayDate, deadlineTone } from "@/lib/format";
+import { DEADLINE_TONE_CLASS } from "@/components/ui/deadline";
 import { getStatusCounts, getUpcomingDeadlines } from "@/server/data/applications";
 import { Pipeline } from "@/components/dashboard/pipeline";
 import { StatusBadge } from "@/components/applications/status-badge";
@@ -32,7 +33,7 @@ function Metric({
       <p className="text-body font-sans font-medium text-ink-mute">
         {label}
       </p>
-      <p className="mt-2 font-display-lg text-primary tabular-nums">
+      <p className="mt-2 font-display-lg font-mono tabular-nums text-primary">
         {value}
       </p>
       <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-hairline">
@@ -171,9 +172,13 @@ export default async function DashboardPage() {
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-4">
-                    <span className="font-sans text-body font-medium tabular-nums text-ink-mute">
-                      {app.deadline ? formatDisplayDate(app.deadline) : null}
-                    </span>
+                    {app.deadline && (
+                      <span
+                        className={`font-mono text-caption tabular-nums ${DEADLINE_TONE_CLASS[deadlineTone(app.deadline)]}`}
+                      >
+                        {formatDisplayDate(app.deadline)}
+                      </span>
+                    )}
                     <StatusBadge status={app.status} />
                   </div>
                 </Link>

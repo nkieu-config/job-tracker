@@ -26,7 +26,7 @@ export default function Error({
           An unexpected error occurred. Please try again.
         </p>
         {error.digest && (
-          <p className="mt-1 font-sans text-caption text-ink-mute tabular-nums">
+          <p className="mt-1 font-mono text-caption text-ink-mute">
             Reference: {error.digest}
           </p>
         )}

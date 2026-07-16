@@ -21,6 +21,8 @@ import {
   type ApplicationStatus,
 } from "@/lib/schemas/application";
 import { STATUS_COLORS } from "@/components/ui/status-colors";
+import { DEADLINE_TONE_CLASS } from "@/components/ui/deadline";
+import type { DeadlineTone } from "@/lib/format";
 import { isOneOf } from "@/lib/guards";
 import { updateApplicationStatus } from "@/actions/applications";
 import { useToast } from "@/components/ui/toast";
@@ -30,21 +32,27 @@ export type BoardApplication = {
   role: string;
   company: string;
   status: ApplicationStatus;
-  deadline: string | null;
+  deadline: { label: string; tone: DeadlineTone } | null;
 };
+
+const ACTIVE_STATUSES = APPLICATION_STATUSES.filter(
+  (s) => s !== "REJECTED",
+) as Exclude<ApplicationStatus, "REJECTED">[];
 
 function CardContent({ app }: { app: BoardApplication }) {
   return (
     <>
-      <p className="truncate font-sans text-body font-bold text-ink">
+      <p className="truncate font-sans text-body font-semibold text-ink">
         {app.role}
       </p>
-      <p className="mt-1 truncate font-sans text-caption text-ink-mute">
+      <p className="mt-0.5 truncate font-sans text-fine text-ink-mute">
         {app.company}
       </p>
       {app.deadline && (
-        <p className="mt-2 font-sans text-fine font-medium tabular-nums text-ink-mute">
-          Due {app.deadline}
+        <p
+          className={`mt-1.5 font-mono text-fine tabular-nums ${DEADLINE_TONE_CLASS[app.deadline.tone]}`}
+        >
+          {app.deadline.label}
         </p>
       )}
     </>
@@ -66,7 +74,7 @@ function BoardCard({ app, dragging }: { app: BoardApplication; dragging: boolean
         href={`/dashboard/applications/${app.id}`}
         draggable={false}
         tabIndex={dragging ? -1 : 0}
-        className="block rounded-xl border border-hairline bg-canvas py-3 pl-4 pr-10 shadow-sm transition-shadow hover:shadow-[0_5px_20px_rgba(0,0,0,0.08)]"
+        className="block rounded-xl border border-hairline bg-canvas py-2.5 pl-3 pr-9 transition-colors hover:border-primary"
       >
         <CardContent app={app} />
       </Link>
@@ -75,10 +83,33 @@ function BoardCard({ app, dragging }: { app: BoardApplication; dragging: boolean
         {...listeners}
         {...attributes}
         aria-label={`Reorder ${app.role} at ${app.company}`}
-        className="absolute right-1 top-1 cursor-grab touch-none rounded-lg p-1.5 text-ink-mute transition-colors hover:bg-canvas-lavender hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:cursor-grabbing"
+        className="absolute right-1 top-1 cursor-grab touch-none rounded-md p-1.5 text-ink-mute transition-colors hover:bg-canvas-lavender hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:cursor-grabbing"
       >
-        <GripVertical size={16} aria-hidden="true" />
+        <GripVertical size={15} aria-hidden="true" />
       </button>
+    </div>
+  );
+}
+
+function ColumnHeader({
+  status,
+  count,
+}: {
+  status: ApplicationStatus;
+  count: number;
+}) {
+  return (
+    <div className="flex items-center gap-2 px-0.5">
+      <span
+        className={`size-1.5 shrink-0 rounded-full ${STATUS_COLORS[status].dot}`}
+        aria-hidden="true"
+      />
+      <h3 className="font-sans text-fine font-semibold uppercase tracking-wide text-ink-mute">
+        {STATUS_LABELS[status]}
+      </h3>
+      <span className="font-mono text-fine tabular-nums text-ink-mute">
+        {count}
+      </span>
     </div>
   );
 }
@@ -93,34 +124,71 @@ function BoardColumn({
   dragging: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
-  const colors = STATUS_COLORS[status];
 
   return (
-    <div className="flex w-64 shrink-0 flex-col gap-3">
-      <div className="flex items-center gap-2 px-1">
-        <span className={`h-2 w-2 rounded-full ${colors.dot}`} aria-hidden="true" />
-        <h3 className="font-sans text-caption font-bold uppercase tracking-wider text-ink-mute">
-          {STATUS_LABELS[status]}
-        </h3>
-        <span className="font-sans text-caption font-bold tabular-nums text-ink-mute">
-          {apps.length}
-        </span>
-      </div>
+    <div className="flex w-60 shrink-0 flex-col gap-2">
+      <ColumnHeader status={status} count={apps.length} />
       <div
         ref={setNodeRef}
-        className={`flex min-h-[160px] flex-1 flex-col gap-2 rounded-2xl p-2 transition-colors ${
-          isOver ? "bg-canvas-lavender" : "bg-canvas-cream/50"
+        className={`flex min-h-30 flex-1 flex-col gap-2 rounded-xl p-1.5 transition-colors ${
+          isOver ? "bg-canvas-lavender-hover" : ""
         }`}
       >
         {apps.map((app) => (
           <BoardCard key={app.id} app={app} dragging={dragging} />
         ))}
         {apps.length === 0 && (
-          <p className="m-auto px-3 py-6 text-center font-sans text-caption text-ink-mute">
-            {dragging ? "Drop here" : "No applications"}
+          <p className="m-auto px-3 py-6 text-center font-sans text-fine text-ink-mute">
+            {dragging ? "Drop here" : "Empty"}
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+function RejectedStrip({
+  apps,
+  dragging,
+}: {
+  apps: BoardApplication[];
+  dragging: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: "REJECTED" });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`rounded-xl border border-hairline px-3 py-2.5 transition-colors ${
+        isOver ? "bg-canvas-lavender-hover" : "bg-canvas-lavender"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <ColumnHeader status="REJECTED" count={apps.length} />
+        {dragging && (
+          <span className="ml-auto font-sans text-fine text-ink-mute">
+            Drop to reject
+          </span>
+        )}
+      </div>
+      {apps.length > 0 && (
+        <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+          {apps.map((app) => (
+            <Link
+              key={app.id}
+              href={`/dashboard/applications/${app.id}`}
+              className="w-40 shrink-0 rounded-lg border border-hairline bg-canvas px-3 py-1.5 transition-colors hover:border-primary"
+            >
+              <p className="truncate font-sans text-fine font-medium text-ink">
+                {app.role}
+              </p>
+              <p className="truncate font-sans text-fine text-ink-mute">
+                {app.company}
+              </p>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -179,6 +247,7 @@ export function ApplicationsBoard({
   const activeApp = activeId
     ? optimisticApps.find((a) => a.id === activeId)
     : null;
+  const dragging = activeId !== null;
 
   return (
     <DndContext
@@ -187,19 +256,25 @@ export function ApplicationsBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveId(null)}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {APPLICATION_STATUSES.map((status) => (
-          <BoardColumn
-            key={status}
-            status={status}
-            apps={optimisticApps.filter((app) => app.status === status)}
-            dragging={activeId !== null}
-          />
-        ))}
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          {ACTIVE_STATUSES.map((status) => (
+            <BoardColumn
+              key={status}
+              status={status}
+              apps={optimisticApps.filter((app) => app.status === status)}
+              dragging={dragging}
+            />
+          ))}
+        </div>
+        <RejectedStrip
+          apps={optimisticApps.filter((app) => app.status === "REJECTED")}
+          dragging={dragging}
+        />
       </div>
       <DragOverlay>
         {activeApp && (
-          <div className="rounded-xl border border-primary bg-canvas px-4 py-3 shadow-[0_10px_30px_rgba(74,21,75,0.2)]">
+          <div className="w-60 rounded-xl border border-primary bg-canvas py-2.5 pl-3 pr-9 shadow-[0_10px_30px_rgba(74,21,75,0.2)]">
             <CardContent app={activeApp} />
           </div>
         )}

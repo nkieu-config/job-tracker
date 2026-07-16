@@ -10,7 +10,7 @@ export type ButtonVariant =
 export type ButtonSize = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-pill font-sans font-bold whitespace-nowrap transition-colors disabled:opacity-60 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-2 rounded-lg font-sans font-bold whitespace-nowrap transition-colors disabled:opacity-60 disabled:cursor-not-allowed";
 
 const VARIANT: Record<ButtonVariant, string> = {
   primary: "bg-primary text-on-primary hover:bg-primary-press",

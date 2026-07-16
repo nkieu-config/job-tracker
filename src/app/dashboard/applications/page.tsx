@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Briefcase } from "lucide-react";
 import { requireSession } from "@/server/get-session";
-import { formatDisplayDate } from "@/lib/format";
+import { formatDisplayDate, deadlineTone } from "@/lib/format";
+import { DEADLINE_TONE_CLASS } from "@/components/ui/deadline";
 import { getApplications } from "@/server/data/applications";
 import { ListControls } from "@/components/applications/list-controls";
 import {
@@ -28,6 +29,8 @@ import {
 export const metadata: Metadata = {
   title: "Applications",
 };
+
+const LIST_GRID = "grid grid-cols-[minmax(0,1fr)_150px_130px] items-center gap-4";
 
 function parseStatus(value?: string): ApplicationStatus | undefined {
   return isOneOf(APPLICATION_STATUSES, value) ? value : undefined;
@@ -71,7 +74,9 @@ export default async function ApplicationsPage({
     role: app.role,
     company: app.company,
     status: app.status,
-    deadline: app.deadline ? formatDisplayDate(app.deadline) : null,
+    deadline: app.deadline
+      ? { label: formatDisplayDate(app.deadline), tone: deadlineTone(app.deadline) }
+      : null,
   }));
 
   const filters: { label: string; value?: ApplicationStatus }[] = [
@@ -196,33 +201,53 @@ export default async function ApplicationsPage({
               </EmptyState>
             )
           ) : (
-            <ul className="mt-4 flex flex-col gap-3">
-              {applications.map((app) => (
-                <li key={app.id}>
-                  <Link
-                    href={`/dashboard/applications/${app.id}`}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-hairline bg-canvas px-6 py-4 transition-shadow hover:shadow-[0_5px_20px_rgba(0,0,0,0.05)]"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate font-sans font-bold text-ink">
-                        {app.role}
-                      </p>
-                      <p className="truncate font-sans text-body text-ink-mute mt-1">
-                        {app.company}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-none border-hairline pt-3 sm:pt-0">
-                      {app.deadline && (
-                        <span className="font-sans text-body font-medium tabular-nums text-ink-mute">
-                          Due {formatDisplayDate(app.deadline)}
-                        </span>
-                      )}
-                      <StatusBadge status={app.status} />
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-4 overflow-x-auto rounded-2xl border border-hairline bg-canvas">
+              <div className="min-w-140">
+                <div
+                  className={`${LIST_GRID} border-b border-hairline px-4 py-2.5`}
+                >
+                  <span className="font-sans text-fine font-medium uppercase tracking-wide text-ink-mute">
+                    Role
+                  </span>
+                  <span className="font-sans text-fine font-medium uppercase tracking-wide text-ink-mute">
+                    Status
+                  </span>
+                  <span className="text-right font-sans text-fine font-medium uppercase tracking-wide text-ink-mute">
+                    Deadline
+                  </span>
+                </div>
+                <ul>
+                  {applications.map((app) => {
+                    const tone = app.deadline ? deadlineTone(app.deadline) : null;
+                    return (
+                      <li key={app.id}>
+                        <Link
+                          href={`/dashboard/applications/${app.id}`}
+                          className={`group ${LIST_GRID} border-b border-hairline px-4 py-3 transition-colors last:border-0 hover:bg-canvas-lavender`}
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate font-sans text-body font-bold text-ink group-hover:text-primary">
+                              {app.role}
+                            </p>
+                            <p className="truncate font-sans text-caption text-ink-mute">
+                              {app.company}
+                            </p>
+                          </div>
+                          <StatusBadge status={app.status} />
+                          <span
+                            className={`text-right font-mono text-caption tabular-nums ${
+                              tone ? DEADLINE_TONE_CLASS[tone] : "text-ink-mute"
+                            }`}
+                          >
+                            {app.deadline ? formatDisplayDate(app.deadline) : "—"}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
           )}
         </>
       )}
