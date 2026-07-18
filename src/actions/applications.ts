@@ -16,6 +16,7 @@ import {
   analyzeJobDescription,
   embedText,
   embedDocument,
+  extractApplicationFields,
   AiError,
 } from "@/server/ai-client";
 import { EMBEDDING_MODEL } from "@/server/ai/models";
@@ -54,6 +55,45 @@ function submittedValues(
     if (typeof value === "string") values[key] = value;
   }
   return values;
+}
+
+export type AutofillState = {
+  error?: string;
+  fields?: { company: string; role: string; deadline: string | null };
+};
+
+// Below this the JD is too thin to extract anything but noise — refuse before
+// spending a slice of the hourly AI budget on it.
+const MIN_JD_FOR_AUTOFILL = 40;
+
+// Called directly from the client (not form-bound): the new-application form
+// isn't saved yet, so there's no row to guard — just auth, a length floor and
+// the budget, then extract. Never persists; the client fills the form fields.
+export async function autofillFromJd(
+  jobDescription: string,
+): Promise<AutofillState> {
+  const session = await getSession();
+  if (!session) redirect("/sign-in");
+
+  const jd = jobDescription.trim();
+  if (jd.length < MIN_JD_FOR_AUTOFILL) {
+    return { error: "Paste a fuller job description first." };
+  }
+
+  const denied = await requireAiBudget(session.user.id);
+  if (denied) return { error: denied.message };
+
+  try {
+    const fields = await extractApplicationFields(
+      jd.slice(0, 20000),
+      session.user.id,
+    );
+    return { fields };
+  } catch (err) {
+    return {
+      error: err instanceof AiError ? err.message : "Autofill failed.",
+    };
+  }
 }
 
 export async function createApplication(

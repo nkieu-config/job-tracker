@@ -25,10 +25,12 @@ class AiError extends Error {}
 const analyzeJobDescription = vi.fn();
 const embedText = vi.fn();
 const embedDocument = vi.fn();
+const extractApplicationFields = vi.fn();
 vi.mock("@/server/ai-client", () => ({
   analyzeJobDescription: (...a: unknown[]) => analyzeJobDescription(...a),
   embedText: (...a: unknown[]) => embedText(...a),
   embedDocument: (...a: unknown[]) => embedDocument(...a),
+  extractApplicationFields: (...a: unknown[]) => extractApplicationFields(...a),
   AiError,
 }));
 
@@ -76,6 +78,7 @@ const {
   deleteApplication,
   analyzeApplication,
   computeResumeFit,
+  autofillFromJd,
 } = await import("@/actions/applications");
 
 function applicationFormData(): FormData {
@@ -107,6 +110,50 @@ beforeEach(() => {
   saveJdEmbedding.mockReset().mockResolvedValue(undefined);
   saveResumeEmbedding.mockReset().mockResolvedValue(undefined);
   getResumesNeedingEmbedding.mockReset().mockResolvedValue([]);
+  extractApplicationFields.mockReset().mockResolvedValue({
+    company: "Acme Corp",
+    role: "Senior Engineer",
+    deadline: "2026-08-15",
+  });
+});
+
+const LONG_JD =
+  "We are hiring a Senior Backend Engineer at Acme Corp to build our platform.";
+
+describe("autofillFromJd", () => {
+  it("returns extracted fields for a substantial job description", async () => {
+    const res = await autofillFromJd(LONG_JD);
+    expect(res.fields).toEqual({
+      company: "Acme Corp",
+      role: "Senior Engineer",
+      deadline: "2026-08-15",
+    });
+    expect(extractApplicationFields).toHaveBeenCalledWith(LONG_JD, OWNER);
+  });
+
+  it("refuses a too-short description without calling the model", async () => {
+    const res = await autofillFromJd("Backend dev");
+    expect(res.error).toMatch(/fuller job description/i);
+    expect(extractApplicationFields).not.toHaveBeenCalled();
+  });
+
+  it("stops when the AI budget is exhausted", async () => {
+    checkAiRateLimit.mockResolvedValue(false);
+    const res = await autofillFromJd(LONG_JD);
+    expect(res.error).toMatch(/rate limit/i);
+    expect(extractApplicationFields).not.toHaveBeenCalled();
+  });
+
+  it("surfaces an AiError message", async () => {
+    extractApplicationFields.mockRejectedValue(new AiError("The AI service failed."));
+    const res = await autofillFromJd(LONG_JD);
+    expect(res.error).toBe("The AI service failed.");
+  });
+
+  it("redirects to sign-in without a session", async () => {
+    getSession.mockResolvedValue(null);
+    await expect(autofillFromJd(LONG_JD)).rejects.toBeInstanceOf(RedirectError);
+  });
 });
 
 const whereOf = (mock: typeof updateMany) => mock.mock.calls[0][0].where;
