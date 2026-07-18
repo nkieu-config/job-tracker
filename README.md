@@ -176,6 +176,7 @@ The AI layer is tested twice, at different altitudes: unit tests mock the SDK at
 ```bash
 npm test                # both unit projects
 npm run test:coverage   # with per-file thresholds
+npm run test:e2e        # browser smoke test (needs the app running at BASE_URL)
 npm run eval            # AI eval suites (needs GEMINI_API_KEY)
 npm run screenshots     # regenerate README screenshots via Playwright
 ```
@@ -203,11 +204,11 @@ npm run screenshots     # regenerate README screenshots via Playwright
 Deliberate scope choices — plus one quota constraint — for a portfolio-scale deployment:
 
 - **The tailoring eval is a 3-of-6 sample** — the Gemini free tier caps generation at 20 requests/day, and running jd-analysis (15 calls, captured in full) first left only part of a day's budget; the remaining items need a paid key or another day's quota.
-- **No browser e2e suite yet** — the Playwright foundation exists (login/settle helpers in `e2e/`, already driving the automated screenshots) but specs haven't been written on it.
+- **The e2e suite is a read-only smoke test** — `npm run test:e2e` drives a real browser through sign-in, the dashboard, navigation, an application detail page and the auth redirect (`e2e/smoke.spec.ts`). It deliberately skips the AI actions (they spend the shared hourly budget) and the create/edit/delete and upload flows (they mutate the shared demo other visitors see); those paths are covered by the unit and integration tests.
 - **Email/password auth only** — no OAuth providers.
 - **PDF text extraction only** — scanned or image-based PDFs yield no text, and the app asks for a readable file instead of OCR-ing it.
 
-Next on the roadmap: a Playwright e2e suite on the existing helpers, a fully captured scorecard on a paid Gemini key, and OAuth sign-in.
+Next on the roadmap: extending the e2e smoke suite to the mutating flows against a throwaway account, a fully captured scorecard on a paid Gemini key, and OAuth sign-in.
 
 ## About
 

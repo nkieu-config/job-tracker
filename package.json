@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "eval": "tsx --conditions=react-server evals/run.ts",
     "generate": "prisma generate",
     "postinstall": "prisma generate",
