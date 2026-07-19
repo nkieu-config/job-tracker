@@ -73,10 +73,11 @@ Regenerated with `npm run eval`, on real model calls:
 
 - **Skill matching** — the embedding layer lifts recall from 86.1% to **94.4%** (+8.3 points; F1 90.5% → **95.5%**) over lexical-only matching, in a controlled ablation.
 - **JD analysis** — **94.0% F1** on skill extraction (precision 94.8%, recall 93.4%), 93.3% seniority accuracy, **100% schema validity** across 15 labeled job descriptions.
-- **Bullet tailoring** — LLM-as-judge scores of **5/5** on relevance, grounding and formatting, with **zero hallucinations** across the 3 of 6 items the free-tier daily quota allowed (excluded items are reported, never silently scored).
-- **Pipeline coach & form autofill** — eval suites are written (LLM-judge plus a model-free focus-grounding check for the coach; exact-match company/role/deadline scoring for autofill), but their scorecards aren't captured yet. The judged suites default to `gemini-2.5-pro` as the LLM judge, which the Gemini free tier no longer serves — set `EVAL_JUDGE_MODEL` to an available model (e.g. `gemini-3.5-flash`) to run them.
+- **Bullet tailoring** — across the full 6-item set: relevance **4.83/5**, grounding **4.67/5**, formatting **5/5**, with a **16.7% hallucination rate** — one of the six introduced an unsupported specific, reported rather than hidden.
+- **Pipeline coach** — LLM-judge relevance **5/5**, grounding **5/5**, actionability **4.4/5**, **zero hallucinations**, and **100%** focus-skill grounding: a model-free check that the skill it tells you to prioritise is a gap actually present in the data, across 5 pipelines.
+- **Form autofill** — **100%** company, role and deadline accuracy (exact match) and **100% schema validity** across 6 job descriptions, scored deterministically with no judge.
 
-Full methodology and per-suite results: [evals/](evals/).
+The judged suites (tailoring, coach) are scored by a separate `gemini-3.5-flash` LLM judge — a newer, stronger model than the one under test, and the harness default since `gemini-2.5-pro` left the free tier (`EVAL_JUDGE_MODEL` overrides it). Full methodology and per-suite results: [evals/](evals/).
 
 ## Feature tour
 
@@ -215,12 +216,12 @@ npm run screenshots     # regenerate README screenshots via Playwright
 
 Deliberate scope choices — plus one quota constraint — for a portfolio-scale deployment:
 
-- **Some eval scorecards aren't captured yet** — the tailoring suite is a 3-of-6 sample (the Gemini free tier caps generation at 20 requests/day), and the pipeline-coach and form-autofill suites are written but unrun. The judged suites also default to a `gemini-2.5-pro` judge the free tier no longer serves, so running them needs `EVAL_JUDGE_MODEL` pointed at an available model. Interview prep is the one AI feature without an eval suite at all.
+- **Interview prep is the one AI feature without an eval suite** — the other five are measured against the scorecard above; an interview-prep suite is the next one to write.
 - **The e2e suite is a read-only smoke test** — `npm run test:e2e` drives a real browser through sign-in, the dashboard, navigation, an application detail page and the auth redirect (`e2e/smoke.spec.ts`). It deliberately skips the AI actions (they spend the shared hourly budget) and the create/edit/delete and upload flows (they mutate the shared demo other visitors see); those paths are covered by the unit and integration tests.
 - **Email/password auth only** — no OAuth providers.
 - **PDF text extraction only** — scanned or image-based PDFs yield no text, and the app asks for a readable file instead of OCR-ing it.
 
-Next on the roadmap: capturing the coach, autofill and full tailoring scorecards (and an interview-prep suite), extending the e2e smoke suite to the mutating flows against a throwaway account, and OAuth sign-in.
+Next on the roadmap: an interview-prep eval suite, extending the e2e smoke suite to the mutating flows against a throwaway account, and OAuth sign-in.
 
 ## About
 

@@ -2,10 +2,12 @@ import { z } from "zod";
 import { getGeminiClient, GENERATION_MODEL } from "@/server/ai/gemini";
 
 // A model judging its own output scores it leniently (self-preference bias), so
-// the judge is a different, stronger model than the one under test. Override
-// with EVAL_JUDGE_MODEL; setting it equal to GENERATION_MODEL is a valid but
+// the judge is a different model from the one under test — a newer-generation
+// flash, stronger than the 2.5-flash it scores. (The earlier gemini-2.5-pro
+// default is no longer served on the Gemini free tier.) Override with
+// EVAL_JUDGE_MODEL; setting it equal to GENERATION_MODEL is a valid but
 // self-judging configuration, and the harness says so.
-export const JUDGE_MODEL = process.env.EVAL_JUDGE_MODEL ?? "gemini-2.5-pro";
+export const JUDGE_MODEL = process.env.EVAL_JUDGE_MODEL ?? "gemini-3.5-flash";
 
 export const judgeIsSelfJudging = (): boolean => JUDGE_MODEL === GENERATION_MODEL;
 

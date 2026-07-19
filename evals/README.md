@@ -15,7 +15,7 @@ Reads `.env` for `GEMINI_API_KEY`. Writes a scorecard to
 
 ## What it measures
 
-Three suites, each demonstrating a different evaluation technique.
+Five suites, each demonstrating a different evaluation technique.
 
 ### 1. `jd-analysis` — reference-based structured extraction
 
@@ -49,30 +49,46 @@ temperature-0 model call against a rubric (relevance / grounding / formatting,
 in the candidate's experience or the JD. Judge output is Zod-validated like any
 other model response, and token usage is recorded for cost observability.
 
-The judge defaults to a **different, stronger model** (`gemini-2.5-pro`) than the
-one under test — a model judging its own output scores it leniently
-(self-preference bias). Override with `EVAL_JUDGE_MODEL`; setting it equal to the
-generation model is allowed but the report notes that the scores are
-self-judged.
+The judge should be a **different, stronger model** than the one under test — a
+model judging its own output scores it leniently (self-preference bias). It
+defaults to `gemini-3.5-flash` (a newer generation than the `gemini-2.5-flash`
+under test; the earlier `gemini-2.5-pro` default is no longer served on the free
+tier). Override with `EVAL_JUDGE_MODEL`; setting it equal to the generation model
+is allowed, but the report notes that the scores are self-judged.
+
+### 4. `coach` — LLM-as-judge + a model-free grounding check
+
+Scores `generateCoachAdvice` on relevance / grounding / actionability (1–5) with
+an LLM judge, and separately asserts — with no model — that the single skill the
+coach tells you to focus on is a gap actually present in the pipeline data. The
+deterministic check is the one that can't be gamed by a lenient judge.
+
+### 5. `autofill` — reference-based, no judge
+
+Runs `extractApplicationFields` over labelled job descriptions and scores the
+company and role (case-insensitively) and the deadline (exactly) against the gold
+values. Deterministic — it needs only generation calls, no second model.
 
 ## Results
 
-Run on `gemini-2.5-flash` + `gemini-embedding-001`; `npm run eval` regenerates.
+Generation on `gemini-2.5-flash` + `gemini-embedding-001`, judged by the default
+`gemini-3.5-flash`; `npm run eval` regenerates.
 
 | Suite | Measures | Status | Result |
 | --- | --- | --- | --- |
 | **skill-match** | embedding layer's lift over lexical-only matching (macro, n=12) | Captured | recall **86.1% → 94.4% (+8.3)**, F1 **90.5% → 95.5%**, precision 97.9% |
 | **jd-analysis** | skill extraction P/R/F1 · seniority accuracy · schema-valid rate (n=15) | Captured | F1 **94.0%** (P 94.8% / R 93.4%), seniority accuracy **93.3%**, schema-valid **100%** |
-| **tailoring** | LLM-as-judge relevance / grounding / formatting (1–5) · hallucination rate | Partial (3/6) | relevance / grounding / formatting **5 / 5 / 5**, hallucination rate **0%** on scored items |
+| **tailoring** | LLM-as-judge relevance / grounding / formatting (1–5) · hallucination rate (n=6) | Captured | relevance / grounding / formatting **4.83 / 4.67 / 5**, hallucination rate **16.7%** (1 of 6) |
+| **coach** | LLM-judge relevance / grounding / actionability (1–5) · focus-skill grounding · hallucination rate (n=5) | Captured | **5 / 5 / 4.4**, focus grounded **100%**, hallucination rate **0%** |
+| **autofill** | company / role / deadline extraction accuracy · schema-valid rate (n=6) | Captured | company / role / deadline **100% / 100% / 100%**, schema-valid **100%** |
 
 > [!IMPORTANT]
-> The Gemini **free tier caps generation at 20 requests/day**, and `jd-analysis`
-> (15) + `tailoring` (6 gen + 6 judge) exceeds that in a single day — the
-> tailoring run above hit the cap after 3 of 6 items, and the excluded items are
-> reported as such, never silently scored. `skill-match` runs on the separate
-> embeddings quota, so it captures in full. Use a paid key — or run one suite
-> per day, or `-- --n=<k>` to subset — to fill the rest; the report writes
-> itself.
+> The Gemini **free tier caps generation at 20 requests/day**. The judged suites
+> also need `EVAL_JUDGE_MODEL` pointed at a served model (e.g. `gemini-3.5-flash`)
+> since `gemini-2.5-pro` is no longer free. Running all five in one day is close
+> to the cap; `skill-match` runs on the separate embeddings quota. Excluded items
+> (e.g. a call the API never answered) are reported as such, never silently
+> scored. Use `-- --n=<k>` to subset, or a paid key, to run more freely.
 
 ### skill-match — the ablation, in detail
 
