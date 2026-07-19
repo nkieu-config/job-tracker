@@ -28,11 +28,15 @@ jobs:
       - run: npm ci
 
       # The seed signs the demo account up through the live app (so passwords
-      # hash server-side) and resets only that account's own rows.
+      # hash server-side) and resets only that account's own rows. The Gemini
+      # key lets it pre-compute embeddings so the resume-fit ranking is
+      # populated right after the reseed; without the secret the seed still
+      # succeeds and just skips them.
       - name: Reseed the demo account against production
         env:
           BASE_URL: https://job-tracker-app-project.vercel.app
           DIRECT_URL: ${{ secrets.PROD_DIRECT_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           if [ -z "$DIRECT_URL" ]; then
             echo '::error::The PROD_DIRECT_URL repository secret is not set. Add the production branch direct connection string (kept as a comment in the local .env) under Settings -> Secrets and variables -> Actions.'
