@@ -38,6 +38,13 @@ export const THRESHOLDS: Record<string, Threshold[]> = {
     { metric: "focus grounded", min: 0.8 },
     { metric: "hallucination rate", max: 0.2 },
   ],
+  autofill: [
+    { metric: "company accuracy", min: 0.8 },
+    // Role phrasing varies more than a company name, so allow a little slack.
+    { metric: "role accuracy", min: 0.7 },
+    { metric: "deadline accuracy", min: 0.8 },
+    { metric: "schema valid", min: 1 },
+  ],
 };
 
 function format(value: number): string {

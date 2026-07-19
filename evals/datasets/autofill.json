@@ -1,0 +1,56 @@
+[
+  {
+    "id": "autofill-acme-iso-deadline",
+    "jobDescription": "Acme Corp is hiring a Senior Backend Engineer to design and scale our core APIs. You will work with TypeScript, Node.js and PostgreSQL on Kubernetes. Apply by 2026-08-15.",
+    "expected": {
+      "company": "Acme Corp",
+      "role": "Senior Backend Engineer",
+      "deadline": "2026-08-15"
+    }
+  },
+  {
+    "id": "autofill-globex-no-deadline",
+    "jobDescription": "Globex is looking for a Frontend Engineer to build performant user interfaces with React, Next.js and Tailwind CSS. Strong CSS fundamentals and an eye for design are a must.",
+    "expected": {
+      "company": "Globex",
+      "role": "Frontend Engineer",
+      "deadline": null
+    }
+  },
+  {
+    "id": "autofill-initech-prose-deadline",
+    "jobDescription": "Join Initech as a DevOps Engineer. You'll own our CI/CD pipelines, Terraform infrastructure and on-call rotation on AWS. Applications close on September 30, 2026.",
+    "expected": {
+      "company": "Initech",
+      "role": "DevOps Engineer",
+      "deadline": "2026-09-30"
+    }
+  },
+  {
+    "id": "autofill-hooli-no-deadline",
+    "jobDescription": "Hooli is seeking a Data Scientist to build models over our search and recommendation data. Requirements: Python, SQL, and experience shipping ML to production.",
+    "expected": {
+      "company": "Hooli",
+      "role": "Data Scientist",
+      "deadline": null
+    }
+  },
+  {
+    "id": "autofill-umbrella-iso-deadline",
+    "jobDescription": "Umbrella Corporation is recruiting a Site Reliability Engineer. Own reliability, observability and incident response for our platform. Deadline: 2026-10-05.",
+    "expected": {
+      "company": "Umbrella Corporation",
+      "role": "Site Reliability Engineer",
+      "deadline": "2026-10-05"
+    }
+  },
+  {
+    "id": "autofill-stark-no-deadline",
+    "jobDescription": "Stark Industries wants a Machine Learning Engineer to take research models into production. You should know PyTorch, distributed training and model serving.",
+    "expected": {
+      "company": "Stark Industries",
+      "role": "Machine Learning Engineer",
+      "deadline": null
+    }
+  }
+]
