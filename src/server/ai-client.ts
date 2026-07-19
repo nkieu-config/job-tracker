@@ -6,6 +6,8 @@ import { AiError } from "@/lib/errors";
 
 export { AiError };
 export { analyzeJobDescription } from "./ai/analyze";
+export { generateCoachAdvice } from "./ai/coach";
+export { extractApplicationFields } from "./ai/extract";
 export {
   embedText,
   embedTextBatch as embedTexts,

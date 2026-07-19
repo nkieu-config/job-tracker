@@ -97,10 +97,24 @@ async function shootSection(heading: string, file: string, maxHeight?: number) {
 // aspect as the board shot that follows, so the two full-width images agree.
 await settle(page);
 await shootFullPage(page, "dashboard.png", CONTEXT_OPTIONS.viewport.height);
+await shootSection("Activity", "activity.png");
+await shootSection("Coaching", "coaching.png");
 
 await page.goto("/dashboard/applications");
 await settle(page);
 await shootFullPage(page, "board.png");
+
+// The new-application form with a job description pasted in, so the AI
+// auto-fill button is enabled the way a user would first see it.
+await page.goto("/dashboard/applications/new");
+await settle(page);
+await page
+  .getByLabel("Job description")
+  .fill(
+    "Aperture Labs is hiring a Senior Frontend Engineer to build our design system in React, Next.js and TypeScript. Apply by 2026-09-15.",
+  );
+await settle(page);
+await shootFullPage(page, "autofill.png", 1400);
 
 await page.goto("/dashboard/applications/demo_app_1");
 await settle(page);

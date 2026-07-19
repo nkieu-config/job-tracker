@@ -25,10 +25,12 @@ class AiError extends Error {}
 const analyzeJobDescription = vi.fn();
 const embedText = vi.fn();
 const embedDocument = vi.fn();
+const extractApplicationFields = vi.fn();
 vi.mock("@/server/ai-client", () => ({
   analyzeJobDescription: (...a: unknown[]) => analyzeJobDescription(...a),
   embedText: (...a: unknown[]) => embedText(...a),
   embedDocument: (...a: unknown[]) => embedDocument(...a),
+  extractApplicationFields: (...a: unknown[]) => extractApplicationFields(...a),
   AiError,
 }));
 
@@ -68,6 +70,7 @@ const { EMBEDDING_MODEL } = await import("@/server/ai/models");
 
 const OWNER = "user-owner";
 const { MAX_APPLICATIONS } = await import("@/server/data/applications");
+const { analysisCacheHash } = await import("@/server/analysis-cache");
 const {
   createApplication,
   updateApplicationStatus,
@@ -76,6 +79,7 @@ const {
   deleteApplication,
   analyzeApplication,
   computeResumeFit,
+  autofillFromJd,
 } = await import("@/actions/applications");
 
 function applicationFormData(): FormData {
@@ -107,6 +111,50 @@ beforeEach(() => {
   saveJdEmbedding.mockReset().mockResolvedValue(undefined);
   saveResumeEmbedding.mockReset().mockResolvedValue(undefined);
   getResumesNeedingEmbedding.mockReset().mockResolvedValue([]);
+  extractApplicationFields.mockReset().mockResolvedValue({
+    company: "Acme Corp",
+    role: "Senior Engineer",
+    deadline: "2026-08-15",
+  });
+});
+
+const LONG_JD =
+  "We are hiring a Senior Backend Engineer at Acme Corp to build our platform.";
+
+describe("autofillFromJd", () => {
+  it("returns extracted fields for a substantial job description", async () => {
+    const res = await autofillFromJd(LONG_JD);
+    expect(res.fields).toEqual({
+      company: "Acme Corp",
+      role: "Senior Engineer",
+      deadline: "2026-08-15",
+    });
+    expect(extractApplicationFields).toHaveBeenCalledWith(LONG_JD, OWNER);
+  });
+
+  it("refuses a too-short description without calling the model", async () => {
+    const res = await autofillFromJd("Backend dev");
+    expect(res.error).toMatch(/fuller job description/i);
+    expect(extractApplicationFields).not.toHaveBeenCalled();
+  });
+
+  it("stops when the AI budget is exhausted", async () => {
+    checkAiRateLimit.mockResolvedValue(false);
+    const res = await autofillFromJd(LONG_JD);
+    expect(res.error).toMatch(/rate limit/i);
+    expect(extractApplicationFields).not.toHaveBeenCalled();
+  });
+
+  it("surfaces an AiError message", async () => {
+    extractApplicationFields.mockRejectedValue(new AiError("The AI service failed."));
+    const res = await autofillFromJd(LONG_JD);
+    expect(res.error).toBe("The AI service failed.");
+  });
+
+  it("redirects to sign-in without a session", async () => {
+    getSession.mockResolvedValue(null);
+    await expect(autofillFromJd(LONG_JD)).rejects.toBeInstanceOf(RedirectError);
+  });
 });
 
 const whereOf = (mock: typeof updateMany) => mock.mock.calls[0][0].where;
@@ -245,6 +293,85 @@ describe("analyzeApplication", () => {
     const write = updateMany.mock.calls[0][0];
     expect(write.where).toEqual({ id: "app-1", userId: OWNER });
     expect(write.data.analysis.requiredSkills).toEqual(["TypeScript"]);
+    expect(write.data.analysisHash).toBe(analysisCacheHash(JD_TEXT));
+  });
+
+  const CACHED_ANALYSIS = {
+    summary: "role",
+    seniority: "senior",
+    requiredSkills: ["TypeScript", "Kubernetes"],
+    niceToHave: [],
+    skillMatches: ["TypeScript"],
+  };
+
+  const cachedApp = () => ({
+    id: "app-1",
+    userId: OWNER,
+    jobDescription: JD_TEXT,
+    analysisHash: analysisCacheHash(JD_TEXT),
+    analysis: CACHED_ANALYSIS,
+  });
+
+  it("skips the model call and refreshes skill matches on an unchanged JD", async () => {
+    findFirst.mockResolvedValue(cachedApp());
+    getResumeText.mockResolvedValue("TypeScript and Kubernetes daily");
+    matchSkillsSemantic.mockResolvedValue({
+      matched: ["TypeScript", "Kubernetes"],
+    });
+
+    const res = await analyzeApplication("app-1", {}, new FormData());
+
+    expect(res).toEqual({ success: true });
+    expect(analyzeJobDescription).not.toHaveBeenCalled();
+    expect(matchSkillsSemantic).toHaveBeenCalledWith(
+      ["TypeScript", "Kubernetes"],
+      "TypeScript and Kubernetes daily",
+      OWNER,
+    );
+    const write = updateMany.mock.calls[0][0];
+    expect(write.data.analysis.skillMatches).toEqual([
+      "TypeScript",
+      "Kubernetes",
+    ]);
+  });
+
+  it("is a free no-op on an unchanged JD with no resume text", async () => {
+    findFirst.mockResolvedValue(cachedApp());
+    getResumeText.mockResolvedValue("");
+
+    const res = await analyzeApplication("app-1", {}, new FormData());
+
+    expect(res).toEqual({ success: true });
+    expect(checkAiRateLimit).not.toHaveBeenCalled();
+    expect(analyzeJobDescription).not.toHaveBeenCalled();
+    expect(matchSkillsSemantic).not.toHaveBeenCalled();
+    const write = updateMany.mock.calls[0][0];
+    expect(write.data.analysis.skillMatches).toBeUndefined();
+  });
+
+  it("still enforces the AI budget before refreshing matches on a cache hit", async () => {
+    findFirst.mockResolvedValue(cachedApp());
+    getResumeText.mockResolvedValue("resume text");
+    checkAiRateLimit.mockResolvedValue(false);
+
+    const res = await analyzeApplication("app-1", {}, new FormData());
+
+    expect(res.error).toMatch(/rate limit/i);
+    expect(matchSkillsSemantic).not.toHaveBeenCalled();
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+
+  it("re-runs the full analysis when the stored hash doesn't match", async () => {
+    findFirst.mockResolvedValue({ ...cachedApp(), analysisHash: "stale" });
+    const res = await analyzeApplication("app-1", {}, new FormData());
+    expect(res).toEqual({ success: true });
+    expect(analyzeJobDescription).toHaveBeenCalled();
+  });
+
+  it("re-runs the full analysis when the cached analysis fails validation", async () => {
+    findFirst.mockResolvedValue({ ...cachedApp(), analysis: { bad: true } });
+    await analyzeApplication("app-1", {}, new FormData());
+    expect(analyzeJobDescription).toHaveBeenCalled();
   });
 
   it("merges semantic skill matches when the user has resume text", async () => {

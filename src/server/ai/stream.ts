@@ -3,6 +3,7 @@ import "server-only";
 import {
   getGeminiClient,
   GENERATION_MODEL,
+  TAILORING_MODEL,
   THINKING_DISABLED,
   billedOutputTokens,
 } from "./gemini";
@@ -21,6 +22,7 @@ type TextChunk = { text?: string; usageMetadata?: Usage };
 async function* streamTokens(
   chunks: AsyncIterable<TextChunk>,
   feature: AiFeature,
+  model: string,
   startedAt: number,
   signal: AbortSignal | undefined,
   userId: string | undefined,
@@ -52,7 +54,7 @@ async function* streamTokens(
     if (completed || failed) {
       recordAiUsage({
         feature,
-        model: GENERATION_MODEL,
+        model,
         userId,
         promptTokens: usage?.promptTokenCount ?? 0,
         outputTokens: billedOutputTokens(usage),
@@ -68,6 +70,7 @@ async function generate(
   prompt: string,
   temperature: number,
   feature: AiFeature,
+  model: string,
   signal?: AbortSignal,
   userId?: string,
 ): Promise<AsyncIterable<string>> {
@@ -77,7 +80,7 @@ async function generate(
   let chunks: AsyncIterable<TextChunk>;
   try {
     chunks = await ai.models.generateContentStream({
-      model: GENERATION_MODEL,
+      model,
       contents: prompt,
       config: {
         temperature,
@@ -89,7 +92,7 @@ async function generate(
     console.error(`[ai:${feature}] request failed`, err);
     recordAiUsage({
       feature,
-      model: GENERATION_MODEL,
+      model,
       userId,
       latencyMs: performance.now() - startedAt,
       ok: false,
@@ -99,7 +102,7 @@ async function generate(
     });
   }
 
-  return streamTokens(chunks, feature, startedAt, signal, userId);
+  return streamTokens(chunks, feature, model, startedAt, signal, userId);
 }
 
 export function tailorBulletsStream(
@@ -112,9 +115,10 @@ export function tailorBulletsStream(
 
 Rules:
 - Start each bullet with "- " on its own line.
-- Lead with a strong action verb; quantify impact where the input allows.
-- Emphasise skills and keywords relevant to the job description.
-- Do NOT invent facts, numbers, or technologies not implied by the experience.
+- Lead with a strong action verb.
+- Emphasise skills and keywords from the job description that the candidate's experience actually supports.
+- Ground every bullet strictly in the candidate's experience. Do NOT introduce facts, technologies, metrics, or descriptive qualifiers (e.g. "high-throughput", "scalable", "seamless", "high-conversion", "high-volume") that the experience does not state — not even flattering ones.
+- Quantify impact only with numbers the experience actually gives; never invent a metric or a scale.
 - Output only the bullet points, nothing else.
 - ${UNTRUSTED_DATA_RULE}
 
@@ -124,7 +128,7 @@ ${fenceUntrusted(jobDescription, 6000)}
 Candidate's experience:
 ${fenceUntrusted(experience, 4000)}`;
 
-  return generate(prompt, 0.6, "tailor", signal, userId);
+  return generate(prompt, 0.6, "tailor", TAILORING_MODEL, signal, userId);
 }
 
 export function interviewPrepStream(
@@ -155,5 +159,5 @@ Rules:
 Job description:
 ${fenceUntrusted(jobDescription, 6000)}`;
 
-  return generate(prompt, 0.4, "interview", signal, userId);
+  return generate(prompt, 0.4, "interview", GENERATION_MODEL, signal, userId);
 }

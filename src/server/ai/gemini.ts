@@ -7,6 +7,7 @@ import { AiError } from "@/lib/errors";
 // the data layer can name a model without loading the Gemini SDK.
 export {
   GENERATION_MODEL,
+  TAILORING_MODEL,
   EMBEDDING_MODEL,
   THINKING_DISABLED,
   billedOutputTokens,

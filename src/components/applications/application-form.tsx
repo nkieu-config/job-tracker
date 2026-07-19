@@ -1,15 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Wand2 } from "lucide-react";
 import {
   APPLICATION_STATUSES,
   STATUS_LABELS,
 } from "@/lib/schemas/application";
 import { Button, buttonClass } from "@/components/ui/button";
 import { inputClass, labelClass } from "@/components/ui/form-styles";
-import type { FormState } from "@/actions/applications";
+import { useToast } from "@/components/ui/toast";
+import { autofillFromJd, type FormState } from "@/actions/applications";
 
 export type ApplicationFormValues = {
   company?: string;
@@ -52,12 +53,61 @@ export function ApplicationForm({
   const fe = state.fieldErrors;
   const values = { ...defaultValues, ...state.values };
 
+  const toast = useToast();
+  const companyRef = useRef<HTMLInputElement>(null);
+  const roleRef = useRef<HTMLInputElement>(null);
+  const deadlineRef = useRef<HTMLInputElement>(null);
+  const jobDescriptionRef = useRef<HTMLTextAreaElement>(null);
+  const [jdLength, setJdLength] = useState(
+    (values.jobDescription ?? "").trim().length,
+  );
+  const [autofilling, startAutofill] = useTransition();
+  const [autofillError, setAutofillError] = useState<string | null>(null);
+
+  // Fill only fields the user hasn't touched, so re-running never clobbers an
+  // edit. The form is uncontrolled, so we read and write the DOM values through
+  // refs; on submit the FormData picks them up like anything typed by hand.
+  function onAutofill() {
+    setAutofillError(null);
+    startAutofill(async () => {
+      const result = await autofillFromJd(jobDescriptionRef.current?.value ?? "");
+      if (result.error) {
+        setAutofillError(result.error);
+        return;
+      }
+      if (!result.fields) return;
+
+      const filled: string[] = [];
+      const fillIfEmpty = (
+        ref: React.RefObject<HTMLInputElement | null>,
+        value: string | null,
+        label: string,
+      ) => {
+        const el = ref.current;
+        if (value && el && el.value.trim() === "") {
+          el.value = value;
+          filled.push(label);
+        }
+      };
+      fillIfEmpty(companyRef, result.fields.company, "company");
+      fillIfEmpty(roleRef, result.fields.role, "role");
+      fillIfEmpty(deadlineRef, result.fields.deadline, "deadline");
+
+      toast(
+        filled.length
+          ? `Filled ${filled.join(", ")} from the description.`
+          : "Those fields already have values — nothing to fill.",
+      );
+    });
+  }
+
   return (
     <form action={formAction} className="flex flex-col gap-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <label className={labelClass}>
           Company
           <input
+            ref={companyRef}
             name="company"
             defaultValue={values.company}
             required
@@ -71,6 +121,7 @@ export function ApplicationForm({
         <label className={labelClass}>
           Role
           <input
+            ref={roleRef}
             name="role"
             defaultValue={values.role}
             required
@@ -102,6 +153,7 @@ export function ApplicationForm({
         <label className={labelClass}>
           Deadline
           <input
+            ref={deadlineRef}
             type="date"
             name="deadline"
             defaultValue={values.deadline}
@@ -127,13 +179,31 @@ export function ApplicationForm({
         <FieldError name="jobUrl" messages={fe?.jobUrl} />
       </label>
 
-      <label className={labelClass}>
-        <div className="flex flex-col gap-1 mb-1">
-          <span>Job description</span>
+      <div className={labelClass}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <label htmlFor="jobDescription">Job description</label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onAutofill}
+            disabled={autofilling || jdLength < 40}
+            aria-describedby={autofillError ? "autofill-error" : undefined}
+          >
+            <Wand2
+              size={14}
+              aria-hidden="true"
+              className={autofilling ? "animate-pulse" : undefined}
+            />
+            {autofilling ? "Reading…" : "Auto-fill from description"}
+          </Button>
         </div>
         <textarea
+          ref={jobDescriptionRef}
+          id="jobDescription"
           name="jobDescription"
           defaultValue={values.jobDescription}
+          onInput={(e) => setJdLength(e.currentTarget.value.trim().length)}
           rows={6}
           aria-invalid={fe?.jobDescription ? true : undefined}
           aria-describedby={
@@ -141,12 +211,21 @@ export function ApplicationForm({
           }
           className={inputClass}
         />
+        {autofillError && (
+          <span
+            id="autofill-error"
+            role="alert"
+            className="text-fine font-sans text-semantic-error"
+          >
+            {autofillError}
+          </span>
+        )}
         <div className="text-caption font-sans text-ink bg-canvas-lavender px-3 py-2 rounded-lg border border-hairline flex items-start gap-2 mt-1 shadow-sm">
           <Sparkles size={14} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
-          <span><b>Pro Tip:</b> Paste the full job description here to unlock AI Skills Analysis and Resume Fit Scoring!</span>
+          <span><b>Pro Tip:</b> Paste the full job description, then <b>Auto-fill</b> to set the company and role — and unlock AI Skills Analysis and Resume Fit Scoring.</span>
         </div>
         <FieldError name="jobDescription" messages={fe?.jobDescription} />
-      </label>
+      </div>
 
       <label className={labelClass}>
         Notes

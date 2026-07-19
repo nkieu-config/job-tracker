@@ -6,7 +6,7 @@
 
 **The job hunt is a data problem. This is the tool I built to solve mine.** An AI-powered job-application tracker that analyzes job descriptions, scores your resume versions against them with vector embeddings, and tailors your bullets — built solo as my capstone project, used daily in my real job search.
 
-**4 AI features, every one measured · 250 tests + a 3-suite AI eval harness · ~11k lines of strict TypeScript (app, tests, evals)**
+**6 AI features, 5 with eval suites · 325 tests + a 5-suite AI eval harness · ~14k lines of strict TypeScript (app, tests, evals)**
 
 ![Dashboard showing application pipeline, response and interview rates, and upcoming deadlines](docs/screenshots/dashboard.png)
 
@@ -39,7 +39,7 @@ The result is the app I now use to run the very job search it was built for. If 
 ## What happens when you analyze one job description
 
 1. A Server Action re-verifies your session (middleware is never the only gate) and checks the per-user hourly AI budget before any model call.
-2. `server/ai` calls Gemini with a JSON schema **derived from a Zod schema**, then re-validates the response with that same schema — malformed model output becomes a recoverable error message, never a crashed page.
+2. `server/ai` calls Gemini with a JSON schema **derived from a Zod schema**, then re-validates the response with that same schema — malformed model output becomes a recoverable error message, never a crashed page. The stored result carries a content-hash fingerprint (description + model + prompt version), so re-analyzing an unchanged description skips the model call and only refreshes the skill matching.
 3. Extracted skills are matched against your resumes in two layers: word-boundary + alias matching first, then embedding similarity for paraphrases — "GitHub Actions pipelines" counts as CI/CD. That second layer's contribution is measured, not assumed.
 4. Computing fit embeds the JD and any new resume versions in one batched call, stores them in `vector(768)` columns, and ranks versions with a single cosine-distance SQL query behind an HNSW index.
 5. Every model call is recorded — tokens and cost roll up per feature on an admin AI-usage page.
@@ -62,30 +62,35 @@ Full deep-dive — system design, data model, decision rationale, challenges-and
 - **The AI is measured, not assumed.** Every feature has to clear an [evaluation harness](evals/) — real metrics, a controlled ablation, and an LLM judge — before it ships. Scorecard below.
 - **Defense-in-depth auth.** Middleware does an optimistic cookie check, but every page, Server Action and route handler independently re-verifies the session and scopes queries by `userId` — a design that survives CVE-2025-29927, the Next.js middleware bypass.
 - **Vector search in the database, not the app.** Embeddings live in Postgres `vector(768)` columns behind an HNSW index; resume ranking is one raw-SQL cosine-distance query, not an application-side similarity loop.
+- **Charts are hand-rolled SVG, not a charting library.** The dashboard's weekly-activity bars and fit ranking are built from primitives (pure bucketing/scale helpers, unit-tested) so they inherit the design tokens — theme-aware in light and dark, keyboard-navigable with an `sr-only` data table — and add zero KB to the bundle.
 - **AI behind one boundary.** All Gemini access lives in a single `server/ai/` module called only from server code, so the API key never reaches the client and there is exactly one place to meter, validate and mock.
 - **Streaming end to end.** Gemini's chunk iterator is piped straight into a Route Handler `ReadableStream` → browser, with an end-of-stream status frame so a dropped connection can never silently persist a truncated result.
 - **Production paper cuts, actually fixed.** Serverless connection exhaustion (now a capped `pg` pool, drained before each Fluid instance suspends), a broken transitive Kysely release pinned with an npm override, Prisma 7's engine removal, Next 16's `middleware` → `proxy` rename — the full list with solutions is in [docs/architecture.md](docs/architecture.md#challenges--solutions).
 
 ### AI eval scorecard
 
-Regenerated with `npm run eval`, on real model calls:
+Regenerated with `npm run eval`, on real model calls. Generation runs on `gemini-3.1-flash-lite` — the free tier retired `gemini-2.5-flash` for new projects — with one exception measured below:
 
-- **Skill matching** — the embedding layer lifts recall from 86.1% to **94.4%** (+8.3 points; F1 90.5% → **95.5%**) over lexical-only matching, in a controlled ablation.
-- **JD analysis** — **94.0% F1** on skill extraction (precision 94.8%, recall 93.4%), 93.3% seniority accuracy, **100% schema validity** across 15 labeled job descriptions.
-- **Bullet tailoring** — LLM-as-judge scores of **5/5** on relevance, grounding and formatting, with **zero hallucinations** across the 3 of 6 items the free-tier daily quota allowed (excluded items are reported, never silently scored).
+- **Skill matching** — the embedding layer lifts recall from 86.1% to **94.4%** (+8.3 points; F1 90.5% → **95.5%**) over lexical-only matching, in a controlled ablation (embedding-only, unaffected by the generation model).
+- **JD analysis** — **87.4% F1** on skill extraction (precision 88.1%, recall 93.4%), 93.3% seniority accuracy, **100% schema validity** across 15 labeled job descriptions. Recall holds vs the retired 2.5-flash; the lite model trades a few points of precision.
+- **Pipeline coach** — LLM-judge relevance **5/5**, grounding **4.8/5**, actionability **4.4/5**, **zero hallucinations**, and **100%** focus-skill grounding: a model-free check that the skill it tells you to prioritise is a gap actually present in the data, across 5 pipelines.
+- **Form autofill** — **100%** company, role and deadline accuracy (exact match) and **100% schema validity** across 6 job descriptions, scored deterministically with no judge.
+- **Bullet tailoring** — the eval caught the lite model fabricating specifics on this task (grounding 3.83/5, below the gate), so tailoring alone runs on the stronger **`gemini-3.5-flash`** with a prompt tightened to bar unsupported qualifiers. Its fresh scorecard on the new stack is being re-captured; the retired 2.5-flash's earlier 4.83 / 4.67 / 5 no longer applies.
 
-Full methodology and per-suite results: [evals/](evals/).
+The judged suites (tailoring, coach) are scored by a separate LLM judge (`gemini-3.5-flash` by default, a different model from the one under test; `EVAL_JUDGE_MODEL` overrides it). Full methodology and per-suite results: [evals/](evals/).
 
 ## Feature tour
 
 | Module               | What it does                                                                                                                      |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Kanban pipeline**  | Drag-and-drop board (Saved → Applied → Interview → Offer → Rejected), optimistic updates, URL-synced list with search/filter/sort |
-| **Dashboard**        | Response, interview and offer rates, pipeline funnel, upcoming deadlines                                                          |
-| **JD analysis**      | Gemini extracts required skills, nice-to-haves and seniority, then flags which skills your resumes are missing                    |
+| **Dashboard**        | Response, interview and offer rates, pipeline funnel, weekly-activity chart, resume-fit ranking, skill-gap insights, upcoming deadlines |
+| **JD analysis**      | Gemini extracts required skills, nice-to-haves and seniority, then flags which skills your resumes are missing — cached by content hash |
 | **Resume fit**       | Ranks every resume version against the JD by pgvector cosine similarity, labeled with Strong/Moderate/Weak bands                  |
 | **Bullet tailoring** | Rewrites your experience into JD-tuned resume bullets, streamed token-by-token, saved per application                             |
 | **Interview prep**   | Streamed prep sheet — likely technical and behavioral questions, each with what a strong answer covers                            |
+| **Pipeline coach**   | Reads your whole pipeline — rates and the skills missing most across roles — for cached, on-demand strategic advice               |
+| **Form autofill**    | Paste a job description on the new-application form and Gemini fills the company, role and deadline                               |
 | **Resume versions**  | PDF upload (content-type and magic-byte checked), text extraction, private Vercel Blob storage                                    |
 | **AI observability** | Admin page tracking tokens and cost per AI feature; a shared hourly AI budget per user                                            |
 
@@ -94,7 +99,15 @@ Two of the AI features stream. Here is bullet tailoring as it actually runs — 
 ![Resume bullets streaming in token by token as the model rewrites experience against the job description](docs/screenshots/tailor-streaming.gif)
 
 <details>
-<summary>📸 More screenshots — the board, all four AI features, and the landing page</summary>
+<summary>📸 More screenshots — the board, the AI features, and the landing page</summary>
+
+The dashboard's Activity section — weekly application bars and a resume-fit ranking, both hand-rolled SVG:
+
+![Weekly activity chart by status and a resume-fit ranking of applications](docs/screenshots/activity.png)
+
+The Coaching section — a skill-gap tally across the pipeline beside on-demand AI advice:
+
+![Skill-gap card and AI pipeline coach with strategic advice](docs/screenshots/coaching.png)
 
 Drag a card and the move persists optimistically:
 
@@ -108,9 +121,13 @@ Drag a card and the move persists optimistically:
 | --- | --- |
 | ![Resume bullets tailored to the job description](docs/screenshots/tailor.png) | ![Generated prep sheet with likely technical and behavioral questions](docs/screenshots/interview-prep.png) |
 
+Paste a job description on the new-application form and AI auto-fill sets the company, role and deadline:
+
+![New-application form with a job description pasted and the AI auto-fill button](docs/screenshots/autofill.png)
+
 The design system in [docs/design.md](docs/design.md), as actually rendered:
 
-![Job Tracker landing page — hero, the four AI features, and the closing call to action](docs/screenshots/landing.png)
+![Job Tracker landing page — hero, the AI features, and the closing call to action](docs/screenshots/landing.png)
 
 </details>
 
@@ -121,7 +138,7 @@ Every image on this page is generated from the seeded demo by Playwright — `np
 | Layer     | Choice                                                                              | Why                                                                                    |
 | --------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | Framework | Next.js 16 (App Router, Server Actions, Route Handlers) + TypeScript strict         | One framework covers server-rendered pages, mutations and token streaming              |
-| AI        | Gemini 2.5 Flash + `gemini-embedding-001`, called in-process from `server/ai/`      | Native JSON-schema output, one vendor for generation + embeddings, free tier is enough |
+| AI        | Gemini 3.1 Flash Lite (3.5 Flash for bullet tailoring) + `gemini-embedding-001`, in-process from `server/ai/` | Native JSON-schema output, one vendor for generation + embeddings; the eval harness picks the model per task |
 | Database  | PostgreSQL (Neon) + Prisma 7 + pgvector                                             | Vectors live beside the relational rows — ranking is one SQL query, not a second store |
 | Auth      | Better Auth (sessions in Postgres)                                                  | Sessions in my own database, scoped by the same `userId` as everything else            |
 | UI        | Tailwind CSS v4, semantic design tokens ([design system](docs/design.md))           | Tokens keep 13 pages consistent without pulling in a component library                 |
@@ -158,11 +175,12 @@ Full environment-variable reference, scripts and deploy guide: [docs/setup.md](d
 
 ## Testing & quality
 
-250 tests across two Vitest projects:
+325 tests across two Vitest projects, plus a read-only Playwright smoke suite (its 8 browser tests run separately):
 
-- **Node (server)** — ownership scoping of every Server Action, the resume upload's blob lifecycle including compensating deletes, the page cap that stops a PDF bomb from pinning the function, rate limiting for both AI and auth, embedding batch splitting, and the fence that keeps a job description from being read as prompt instructions.
+- **Node (server)** — ownership scoping of every Server Action, the JD-analysis cache short-circuit, the pipeline-snapshot aggregation, the resume upload's blob lifecycle including compensating deletes, the page cap that stops a PDF bomb from pinning the function, rate limiting for both AI and auth, embedding batch splitting, and the fence that keeps a job description from being read as prompt instructions.
 - **jsdom (components)** — the streaming UI's save/discard rules and the accessibility invariants of the drag-and-drop board.
-- **Integration (10 of the 250)** — run against a real Postgres and skip when no database is reachable. They cover the raw SQL the mocked unit tests can't reach: the rate limiter's atomic upsert, and the predicate deciding whether a resume holds readable text.
+- **Integration (10 of the 325)** — run against a real Postgres and skip when no database is reachable. They cover the raw SQL the mocked unit tests can't reach: the rate limiter's atomic upsert, and the predicate deciding whether a resume holds readable text.
+- **e2e (`npm run test:e2e`)** — a Playwright smoke test walks sign-in, the dashboard, navigation and the auth redirect against a running app; it stays read-only to leave the shared demo untouched.
 
 Security-critical modules — the prompt fence, the admin gate, the AI ownership guard and the PDF page cap among them — are pinned to **100% coverage thresholds** in CI.
 
@@ -171,6 +189,7 @@ The AI layer is tested twice, at different altitudes: unit tests mock the SDK at
 ```bash
 npm test                # both unit projects
 npm run test:coverage   # with per-file thresholds
+npm run test:e2e        # browser smoke test (needs the app running at BASE_URL)
 npm run eval            # AI eval suites (needs GEMINI_API_KEY)
 npm run screenshots     # regenerate README screenshots via Playwright
 ```
@@ -197,12 +216,12 @@ npm run screenshots     # regenerate README screenshots via Playwright
 
 Deliberate scope choices — plus one quota constraint — for a portfolio-scale deployment:
 
-- **The tailoring eval is a 3-of-6 sample** — the Gemini free tier caps generation at 20 requests/day, and running jd-analysis (15 calls, captured in full) first left only part of a day's budget; the remaining items need a paid key or another day's quota.
-- **No browser e2e suite yet** — the Playwright foundation exists (login/settle helpers in `e2e/`, already driving the automated screenshots) but specs haven't been written on it.
+- **Interview prep is the one AI feature without an eval suite** — the other five are measured against the scorecard above; an interview-prep suite is the next one to write.
+- **The e2e suite is a read-only smoke test** — `npm run test:e2e` drives a real browser through sign-in, the dashboard, navigation, an application detail page and the auth redirect (`e2e/smoke.spec.ts`). It deliberately skips the AI actions (they spend the shared hourly budget) and the create/edit/delete and upload flows (they mutate the shared demo other visitors see); those paths are covered by the unit and integration tests.
 - **Email/password auth only** — no OAuth providers.
 - **PDF text extraction only** — scanned or image-based PDFs yield no text, and the app asks for a readable file instead of OCR-ing it.
 
-Next on the roadmap: a Playwright e2e suite on the existing helpers, a fully captured scorecard on a paid Gemini key, and OAuth sign-in.
+Next on the roadmap: an interview-prep eval suite, extending the e2e smoke suite to the mutating flows against a throwaway account, and OAuth sign-in.
 
 ## About
 
