@@ -7,6 +7,7 @@ const getGeminiClient = vi.fn();
 vi.mock("@/server/ai/gemini", () => ({
   getGeminiClient: () => getGeminiClient(),
   GENERATION_MODEL: "test-generation-model",
+  TAILORING_MODEL: "test-tailoring-model",
   THINKING_DISABLED: { thinkingBudget: 0 },
   billedOutputTokens: (usage?: {
     candidatesTokenCount?: number;
@@ -137,6 +138,17 @@ describe("tailorBulletsStream", () => {
         totalTokens: 150,
         ok: true,
       }),
+    );
+  });
+
+  it("runs on the dedicated tailoring model, not the default", async () => {
+    await collect(await tailorBulletsStream("JD", "x"));
+
+    expect(generateContentStream).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "test-tailoring-model" }),
+    );
+    expect(recordAiUsage).toHaveBeenCalledWith(
+      expect.objectContaining({ feature: "tailor", model: "test-tailoring-model" }),
     );
   });
 

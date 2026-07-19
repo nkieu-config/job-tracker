@@ -6,7 +6,7 @@
 
 **The job hunt is a data problem. This is the tool I built to solve mine.** An AI-powered job-application tracker that analyzes job descriptions, scores your resume versions against them with vector embeddings, and tailors your bullets — built solo as my capstone project, used daily in my real job search.
 
-**6 AI features, 5 with eval suites · 314 tests + a 5-suite AI eval harness · ~14k lines of strict TypeScript (app, tests, evals)**
+**6 AI features, 5 with eval suites · 315 tests + a 5-suite AI eval harness · ~14k lines of strict TypeScript (app, tests, evals)**
 
 ![Dashboard showing application pipeline, response and interview rates, and upcoming deadlines](docs/screenshots/dashboard.png)
 
@@ -69,15 +69,15 @@ Full deep-dive — system design, data model, decision rationale, challenges-and
 
 ### AI eval scorecard
 
-Regenerated with `npm run eval`, on real model calls:
+Regenerated with `npm run eval`, on real model calls. Generation runs on `gemini-3.1-flash-lite` — the free tier retired `gemini-2.5-flash` for new projects — with one exception measured below:
 
-- **Skill matching** — the embedding layer lifts recall from 86.1% to **94.4%** (+8.3 points; F1 90.5% → **95.5%**) over lexical-only matching, in a controlled ablation.
-- **JD analysis** — **94.0% F1** on skill extraction (precision 94.8%, recall 93.4%), 93.3% seniority accuracy, **100% schema validity** across 15 labeled job descriptions.
-- **Bullet tailoring** — across the full 6-item set: relevance **4.83/5**, grounding **4.67/5**, formatting **5/5**, with a **16.7% hallucination rate** — one of the six introduced an unsupported specific, reported rather than hidden.
-- **Pipeline coach** — LLM-judge relevance **5/5**, grounding **5/5**, actionability **4.4/5**, **zero hallucinations**, and **100%** focus-skill grounding: a model-free check that the skill it tells you to prioritise is a gap actually present in the data, across 5 pipelines.
+- **Skill matching** — the embedding layer lifts recall from 86.1% to **94.4%** (+8.3 points; F1 90.5% → **95.5%**) over lexical-only matching, in a controlled ablation (embedding-only, unaffected by the generation model).
+- **JD analysis** — **87.4% F1** on skill extraction (precision 88.1%, recall 93.4%), 93.3% seniority accuracy, **100% schema validity** across 15 labeled job descriptions. Recall holds vs the retired 2.5-flash; the lite model trades a few points of precision.
+- **Pipeline coach** — LLM-judge relevance **5/5**, grounding **4.8/5**, actionability **4.4/5**, **zero hallucinations**, and **100%** focus-skill grounding: a model-free check that the skill it tells you to prioritise is a gap actually present in the data, across 5 pipelines.
 - **Form autofill** — **100%** company, role and deadline accuracy (exact match) and **100% schema validity** across 6 job descriptions, scored deterministically with no judge.
+- **Bullet tailoring** — the eval caught the lite model fabricating specifics on this task (grounding 3.83/5, below the gate), so tailoring alone runs on the stronger **`gemini-3.5-flash`** with a prompt tightened to bar unsupported qualifiers. Its fresh scorecard on the new stack is being re-captured; the retired 2.5-flash's earlier 4.83 / 4.67 / 5 no longer applies.
 
-The judged suites (tailoring, coach) are scored by a separate `gemini-3.5-flash` LLM judge — a newer, stronger model than the one under test, and the harness default since `gemini-2.5-pro` left the free tier (`EVAL_JUDGE_MODEL` overrides it). Full methodology and per-suite results: [evals/](evals/).
+The judged suites (tailoring, coach) are scored by a separate LLM judge (`gemini-3.5-flash` by default, a different model from the one under test; `EVAL_JUDGE_MODEL` overrides it). Full methodology and per-suite results: [evals/](evals/).
 
 ## Feature tour
 
@@ -138,7 +138,7 @@ Every image on this page is generated from the seeded demo by Playwright — `np
 | Layer     | Choice                                                                              | Why                                                                                    |
 | --------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | Framework | Next.js 16 (App Router, Server Actions, Route Handlers) + TypeScript strict         | One framework covers server-rendered pages, mutations and token streaming              |
-| AI        | Gemini 2.5 Flash + `gemini-embedding-001`, called in-process from `server/ai/`      | Native JSON-schema output, one vendor for generation + embeddings, free tier is enough |
+| AI        | Gemini 3.1 Flash Lite (3.5 Flash for bullet tailoring) + `gemini-embedding-001`, in-process from `server/ai/` | Native JSON-schema output, one vendor for generation + embeddings; the eval harness picks the model per task |
 | Database  | PostgreSQL (Neon) + Prisma 7 + pgvector                                             | Vectors live beside the relational rows — ranking is one SQL query, not a second store |
 | Auth      | Better Auth (sessions in Postgres)                                                  | Sessions in my own database, scoped by the same `userId` as everything else            |
 | UI        | Tailwind CSS v4, semantic design tokens ([design system](docs/design.md))           | Tokens keep 13 pages consistent without pulling in a component library                 |
@@ -175,7 +175,7 @@ Full environment-variable reference, scripts and deploy guide: [docs/setup.md](d
 
 ## Testing & quality
 
-314 tests across two Vitest projects, plus a read-only Playwright smoke suite:
+315 tests across two Vitest projects, plus a read-only Playwright smoke suite:
 
 - **Node (server)** — ownership scoping of every Server Action, the JD-analysis cache short-circuit, the pipeline-snapshot aggregation, the resume upload's blob lifecycle including compensating deletes, the page cap that stops a PDF bomb from pinning the function, rate limiting for both AI and auth, embedding batch splitting, and the fence that keeps a job description from being read as prompt instructions.
 - **jsdom (components)** — the streaming UI's save/discard rules and the accessibility invariants of the drag-and-drop board.
