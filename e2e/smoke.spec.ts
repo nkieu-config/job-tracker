@@ -6,17 +6,20 @@ import { signInAsDemo, sectionByHeading } from "./helpers";
 // delete and upload flows (they mutate the shared demo data other visitors see)
 // — those paths are covered by the unit and integration tests. What's left is
 // the navigation and rendering that only a real browser can confirm.
+//
+// Authentication comes from the setup project's saved storage state — the app
+// rate-limits sign-in, so tests must not sign in individually.
 
 test.describe("signed in as the demo account", () => {
   test.beforeEach(async ({ page }) => {
-    await signInAsDemo(page);
+    await page.goto("/dashboard");
   });
 
   test("the dashboard renders every section", async ({ page }) => {
     await expect(
       page.getByRole("heading", { level: 1, name: /Welcome/ }),
     ).toBeVisible();
-    await expect(page.getByText("Response rate")).toBeVisible();
+    await expect(page.getByText("Response rate", { exact: true })).toBeVisible();
     for (const heading of ["Pipeline", "Activity", "Coaching", "Upcoming deadlines"]) {
       await expect(sectionByHeading(page, heading)).toBeVisible();
     }
@@ -37,13 +40,14 @@ test.describe("signed in as the demo account", () => {
     await expect(page.getByLabel("Search applications")).toBeVisible();
   });
 
-  test("the Applications nav opens the list with the seeded roles", async ({ page }) => {
+  test("the Applications nav opens the board with the seeded roles", async ({ page }) => {
     await page.getByRole("link", { name: "Applications" }).click();
     await page.waitForURL("**/dashboard/applications**");
-    await expect(page.getByLabel("Search applications")).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Senior Backend Engineer/ }),
+      page.getByRole("link", { name: /Senior Backend Engineer/ }).first(),
     ).toBeVisible();
+    await page.goto("/dashboard/applications?view=list");
+    await expect(page.getByLabel("Search applications")).toBeVisible();
   });
 
   test("an application detail page shows the AI analysis sections", async ({ page }) => {
@@ -69,18 +73,28 @@ test.describe("signed in as the demo account", () => {
     ).toBeVisible();
   });
 
-  test("signing out returns to the sign-in page", async ({ page }) => {
+});
+
+// Signing out revokes the server-side session that every other test shares, so
+// this flow runs in its own context with a fresh sign-in of its own.
+test.describe("session lifecycle", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("signing in and out round-trips back to the sign-in page", async ({
+    page,
+  }) => {
+    await signInAsDemo(page);
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.waitForURL("**/sign-in");
   });
-});
 
-test("visiting the dashboard while signed out redirects to sign-in", async ({
-  page,
-}) => {
-  await page.goto("/dashboard");
-  await page.waitForURL("**/sign-in**");
-  await expect(
-    page.getByRole("button", { name: "Sign in", exact: true }),
-  ).toBeVisible();
+  test("visiting the dashboard while signed out redirects to sign-in", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard");
+    await page.waitForURL("**/sign-in**");
+    await expect(
+      page.getByRole("button", { name: "Sign in", exact: true }),
+    ).toBeVisible();
+  });
 });

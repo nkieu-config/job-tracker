@@ -3,6 +3,8 @@ import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/constants/demo";
 
 export const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 
+export const STORAGE_STATE = "e2e/.auth/demo.json";
+
 export const CONTEXT_OPTIONS = {
   baseURL: BASE_URL,
   viewport: { width: 1440, height: 900 },

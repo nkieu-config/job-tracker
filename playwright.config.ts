@@ -1,6 +1,6 @@
 import { defineConfig } from "@playwright/test";
 import { config as loadEnv } from "dotenv";
-import { BASE_URL, CONTEXT_OPTIONS } from "./e2e/helpers";
+import { BASE_URL, CONTEXT_OPTIONS, STORAGE_STATE } from "./e2e/helpers";
 
 loadEnv({ path: ".env", quiet: true });
 
@@ -22,5 +22,15 @@ export default defineConfig({
     colorScheme: "light",
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium" }],
+  // The app rate-limits /sign-in/email to 10 attempts per 5 minutes, so the
+  // suite signs in exactly once (the setup project) and every test reuses the
+  // saved session instead of burning a sign-in each.
+  projects: [
+    { name: "setup", testMatch: "auth.setup.ts" },
+    {
+      name: "chromium",
+      dependencies: ["setup"],
+      use: { storageState: STORAGE_STATE },
+    },
+  ],
 });
