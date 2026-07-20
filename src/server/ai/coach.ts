@@ -12,6 +12,7 @@ import {
   THINKING_DISABLED,
   billedOutputTokens,
 } from "./gemini";
+import { fenceUntrusted, UNTRUSTED_DATA_RULE } from "./prompt";
 
 const TIMEOUT_MS = 30_000;
 
@@ -33,10 +34,12 @@ export function buildCoachPrompt(snapshot: PipelineSnapshot): string {
     .map(([status, n]) => `${STATUS_LABELS[status as keyof typeof STATUS_LABELS]}: ${n}`)
     .join(", ");
 
-  const gapLine = topMissingSkills.length
-    ? topMissingSkills
-        .map((g) => `${g.skill} (missing in ${g.count})`)
-        .join(", ")
+  const gapBlock = topMissingSkills.length
+    ? fenceUntrusted(
+        topMissingSkills
+          .map((g) => `${g.skill} (missing in ${g.count})`)
+          .join("\n"),
+      )
     : "none recorded yet";
 
   const seniorityLine = Object.entries(seniorityMix)
@@ -45,6 +48,7 @@ export function buildCoachPrompt(snapshot: PipelineSnapshot): string {
     .join(", ") || "unknown";
 
   return `You are a pragmatic job-search coach. Using ONLY the pipeline data below, write concise, actionable advice for this candidate. Do not invent numbers, companies, or skills that aren't in the data.
+${UNTRUSTED_DATA_RULE}
 
 Pipeline data:
 - Applications tracked: ${snapshot.total} (${snapshot.analyzedCount} analyzed against a resume)
@@ -52,8 +56,10 @@ Pipeline data:
 - Response rate: ${formatPercent(rates.responseRate)}
 - Interview rate: ${formatPercent(rates.interviewRate)}
 - Offer rate: ${formatPercent(rates.offerRate)}
-- Most common missing skills across roles: ${gapLine}
 - Seniority of roles applied to: ${seniorityLine}
+
+Most common missing skills across roles:
+${gapBlock}
 
 Return:
 - headline: one sentence reading the overall health of this pipeline.

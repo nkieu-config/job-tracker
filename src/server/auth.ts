@@ -10,6 +10,7 @@ import { DEMO_EMAIL } from "@/lib/constants/demo";
 
 const SESSION_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 7;
 const SESSION_REFRESH_AFTER_SECONDS = 60 * 60 * 24;
+const SESSION_COOKIE_CACHE_SECONDS = 60 * 5;
 const RESET_TOKEN_EXPIRES_IN_SECONDS = 60 * 60;
 const VERIFICATION_TOKEN_EXPIRES_IN_SECONDS = 60 * 60 * 24;
 
@@ -17,6 +18,7 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
     resetPasswordTokenExpiresIn: RESET_TOKEN_EXPIRES_IN_SECONDS,
     sendResetPassword: async ({ user, url }) => {
       await sendEmail({
@@ -28,6 +30,7 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendOnSignUp: true,
+    sendOnSignIn: true,
     autoSignInAfterVerification: true,
     expiresIn: VERIFICATION_TOKEN_EXPIRES_IN_SECONDS,
     sendVerificationEmail: async ({ user, url }) => {
@@ -42,6 +45,10 @@ export const auth = betterAuth({
   session: {
     expiresIn: SESSION_EXPIRES_IN_SECONDS,
     updateAge: SESSION_REFRESH_AFTER_SECONDS,
+    cookieCache: {
+      enabled: true,
+      maxAge: SESSION_COOKIE_CACHE_SECONDS,
+    },
   },
   rateLimit: {
     enabled: true,

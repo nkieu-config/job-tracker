@@ -1,7 +1,17 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { deleteExpiredRateLimits } from "@/server/rate-limit";
 
 export const maxDuration = 30;
+
+function authorizationMatches(header: string | null, secret: string): boolean {
+  if (header === null) return false;
+  const provided = Buffer.from(header);
+  const expected = Buffer.from(`Bearer ${secret}`);
+  return (
+    provided.length === expected.length && timingSafeEqual(provided, expected)
+  );
+}
 
 // Vercel Cron hits this on a schedule (see vercel.json). It's a public URL, so
 // it authenticates the caller against CRON_SECRET; Vercel sends it as
@@ -12,7 +22,7 @@ export async function GET(request: Request) {
   if (!secret) {
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
-  if (request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!authorizationMatches(request.headers.get("authorization"), secret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

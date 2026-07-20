@@ -28,7 +28,11 @@ export function SignInForm({
     try {
       const { error } = await signIn.email({ email, password });
       if (error) {
-        setError(error.message ?? "Invalid email or password.");
+        setError(
+          error.code === "EMAIL_NOT_VERIFIED"
+            ? "Verify your email first — we've just sent a fresh link to your inbox."
+            : (error.message ?? "Invalid email or password."),
+        );
         setLoading(false);
         return;
       }
