@@ -179,7 +179,7 @@ Full environment-variable reference, scripts and deploy guide: [docs/setup.md](d
 
 - **Node (server)** — ownership scoping of every Server Action, the JD-analysis cache short-circuit, the pipeline-snapshot aggregation, the resume upload's blob lifecycle including compensating deletes, the page cap that stops a PDF bomb from pinning the function, rate limiting for both AI and auth, embedding batch splitting, and the fence that keeps a job description from being read as prompt instructions.
 - **jsdom (components)** — the streaming UI's save/discard rules and the accessibility invariants of the drag-and-drop board.
-- **Integration (10 of the 337)** — run against a real Postgres and skip when no database is reachable. They cover the raw SQL the mocked unit tests can't reach: the rate limiter's atomic upsert, and the predicate deciding whether a resume holds readable text.
+- **Integration (10 of the 337)** — run against a real Postgres, and skip locally when no database is reachable. CI always runs them against a `pgvector/pgvector` service container, so the raw SQL the mocked unit tests can't reach stays covered: the rate limiter's atomic upsert, and the predicate deciding whether a resume holds readable text.
 - **e2e (`npm run test:e2e`)** — a Playwright smoke test walks sign-in, the dashboard, navigation and the auth redirect against a running app; it stays read-only to leave the shared demo untouched.
 
 Security-critical modules — the prompt fence, the admin gate, the AI ownership guard and the PDF page cap among them — are pinned to **100% coverage thresholds** in CI.
