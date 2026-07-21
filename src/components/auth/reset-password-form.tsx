@@ -47,7 +47,7 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
       <div className="flex flex-col gap-4">
         <p
           role="alert"
-          className="rounded-lg bg-canvas-error px-4 py-3 text-center text-body font-medium text-semantic-error"
+          className="rounded-lg bg-semantic-error-tint px-4 py-3 text-center text-body font-medium text-semantic-error"
         >
           This reset link is invalid or has expired.
         </p>
@@ -92,7 +92,7 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
       {error && (
         <p
           role="alert"
-          className="rounded-lg bg-canvas-error px-4 py-3 text-body text-semantic-error font-medium"
+          className="rounded-lg bg-semantic-error-tint px-4 py-3 text-body text-semantic-error font-medium"
         >
           {error}
         </p>

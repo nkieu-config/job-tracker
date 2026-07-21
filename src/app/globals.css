@@ -30,7 +30,6 @@
   --canvas: #ffffff;
   --canvas-lavender: #f4f0f5;
   --canvas-lavender-hover: #ece6ef;
-  --canvas-error: #fdf0f0;
 
   --surface-hover: #f5eded;
 
@@ -66,7 +65,6 @@
     --canvas: #1d1722;
     --canvas-lavender: #141017;
     --canvas-lavender-hover: #252030;
-    --canvas-error: #2b1a1e;
 
     --surface-hover: #252030;
 
@@ -102,7 +100,6 @@
   --canvas: #1d1722;
   --canvas-lavender: #141017;
   --canvas-lavender-hover: #252030;
-  --canvas-error: #2b1a1e;
 
   --surface-hover: #252030;
 
@@ -152,7 +149,6 @@
   --color-semantic-warning-tint: var(--semantic-warning-tint);
 
   --color-canvas-lavender-hover: var(--canvas-lavender-hover);
-  --color-canvas-error: var(--canvas-error);
   --color-surface-hover: var(--surface-hover);
 
   /* Radius scale — tightened, aubergine-console feel; no 90px pills */
