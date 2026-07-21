@@ -5,15 +5,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "@/lib/auth-client";
 import { DemoButton } from "@/components/auth/demo-button";
+import { SocialButtons } from "@/components/auth/social-buttons";
 import { Button, buttonClass } from "@/components/ui/button";
 import { inputClass, labelClass } from "@/components/ui/form-styles";
+import type { OAuthProviderId } from "@/lib/oauth-providers";
 
 export function SignInForm({
   passwordWasReset = false,
   canResetPassword = false,
+  oauthProviders = [],
 }: {
   passwordWasReset?: boolean;
   canResetPassword?: boolean;
+  oauthProviders?: OAuthProviderId[];
 }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -111,15 +115,22 @@ export function SignInForm({
         <span className="h-px flex-1 bg-hairline" />
       </div>
 
-      <DemoButton
-        onError={setError}
-        disabled={loading}
-        className={buttonClass({
-          variant: "outline",
-          size: "lg",
-          className: "w-full",
-        })}
-      />
+      <div className="flex flex-col gap-3">
+        <SocialButtons
+          providers={oauthProviders}
+          onError={setError}
+          disabled={loading}
+        />
+        <DemoButton
+          onError={setError}
+          disabled={loading}
+          className={buttonClass({
+            variant: "outline",
+            size: "lg",
+            className: "w-full",
+          })}
+        />
+      </div>
     </>
   );
 }

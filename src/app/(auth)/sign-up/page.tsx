@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { enabledOAuthProviders } from "@/server/oauth";
 import { SignUpForm } from "@/components/auth/sign-up-form";
 import { LogoMark } from "@/components/ui/logo";
 
@@ -23,7 +24,7 @@ export default function SignUpPage() {
           Start tracking your job applications.
         </p>
 
-        <SignUpForm />
+        <SignUpForm oauthProviders={enabledOAuthProviders()} />
 
         <p className="mt-8 text-center font-sans text-body text-ink-mute">
           Already have an account?{" "}

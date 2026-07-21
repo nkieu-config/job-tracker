@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { emailIsDeliverable } from "@/server/email";
+import { enabledOAuthProviders } from "@/server/oauth";
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { LogoMark } from "@/components/ui/logo";
 
@@ -33,6 +34,7 @@ export default async function SignInPage({
         <SignInForm
           passwordWasReset={reset === "1"}
           canResetPassword={emailIsDeliverable}
+          oauthProviders={enabledOAuthProviders()}
         />
 
         <p className="mt-8 text-center font-sans text-body text-ink-mute">
