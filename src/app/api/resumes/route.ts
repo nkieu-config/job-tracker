@@ -103,6 +103,19 @@ export async function POST(request: Request) {
     );
   }
 
+  // A scanned or image-only PDF parses but carries no text layer. Rather than
+  // OCR it or store a resume the fit step can't use, ask for a readable file —
+  // and bail before the blob upload so nothing is billed for an unusable file.
+  if (content === "") {
+    return NextResponse.json(
+      {
+        error:
+          "No readable text found in this PDF — it may be a scanned image. Upload a text-based PDF.",
+      },
+      { status: 422 },
+    );
+  }
+
   let fileUrl: string;
   try {
     const blob = await put(resumeBlobPath(session.user.id, file.name), file, {
