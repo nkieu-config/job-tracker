@@ -4,10 +4,10 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/server/get-session";
 import { formatDisplayDate, deadlineTone } from "@/lib/format";
 import { getApplication } from "@/server/data/applications";
-import { getResumeText, getResumeTextMeta } from "@/server/data/resumes";
+import { getResumeTextMeta } from "@/server/data/resumes";
 import { storedJdAnalysisSchema } from "@/lib/schemas/jd-analysis";
 import { analysisCacheHash } from "@/server/analysis-cache";
-import { matchSkills } from "@/lib/skills";
+import { resolveSkillGap } from "@/server/skill-gap";
 import { fitBand } from "@/components/ui/fit-score";
 import { buttonClass } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -64,22 +64,7 @@ export default async function ApplicationDetailPage({
   const analysisResult = storedJdAnalysisSchema.safeParse(application.analysis);
   const analysis = analysisResult.success ? analysisResult.data : null;
 
-  // `skillMatches` is stored by the analyzer, so the normal path already knows
-  // the answer. Only an analysis predating that field falls back to lexical
-  // matching here — the one case that needs the resume text itself, and the one
-  // case worth a second round-trip for it.
-  const gap = analysis
-    ? analysis.skillMatches
-      ? {
-          matched: analysis.requiredSkills.filter((s) =>
-            analysis.skillMatches?.includes(s),
-          ),
-          missing: analysis.requiredSkills.filter(
-            (s) => !analysis.skillMatches?.includes(s),
-          ),
-        }
-      : matchSkills(analysis.requiredSkills, await getResumeText(userId))
-    : null;
+  const gap = await resolveSkillGap(analysis, userId);
   const hasJd = Boolean(application.jobDescription?.trim());
 
   const resumesChangedSinceAnalysis =
