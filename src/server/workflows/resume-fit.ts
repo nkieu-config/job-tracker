@@ -1,6 +1,7 @@
 import "server-only";
 
-import { embedText, embedDocument, AiError } from "@/server/ai-client";
+import { embedText, embedDocument } from "@/server/ai-client";
+import { AiError } from "@/lib/errors";
 import { EMBEDDING_MODEL } from "@/server/ai/models";
 import { sha256 } from "@/server/hash";
 import { hasResumeWithText } from "@/server/data/resumes";

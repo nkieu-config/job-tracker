@@ -11,7 +11,8 @@ import {
   type ApplicationInput,
   type ApplicationStatus,
 } from "@/lib/schemas/application";
-import { extractApplicationFields, AiError } from "@/server/ai-client";
+import { extractApplicationFields } from "@/server/ai-client";
+import { AiError } from "@/lib/errors";
 import {
   countApplications,
   createApplicationForUser,

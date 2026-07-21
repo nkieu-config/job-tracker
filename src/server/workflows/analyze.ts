@@ -6,7 +6,8 @@ import {
   type StoredJdAnalysis,
 } from "@/lib/schemas/jd-analysis";
 import { analysisCacheHash } from "@/server/analysis-cache";
-import { analyzeJobDescription, AiError } from "@/server/ai-client";
+import { analyzeJobDescription } from "@/server/ai-client";
+import { AiError } from "@/lib/errors";
 import { matchSkillsSemantic } from "@/server/semantic-skills";
 import { getResumeText } from "@/server/data/resumes";
 import { saveApplicationAnalysis } from "@/server/data/applications";

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { AiError } from "@/lib/errors";
 import type { PipelineSnapshot } from "@/lib/insights";
 import { coachSnapshotHash, MIN_ANALYZED_FOR_COACH } from "@/server/coach";
 
@@ -23,11 +24,9 @@ vi.mock("@/server/data/insights", () => ({
   getPipelineSnapshot: () => getPipelineSnapshot(),
 }));
 
-class AiError extends Error {}
 const generateCoachAdvice = vi.fn();
 vi.mock("@/server/ai-client", () => ({
   generateCoachAdvice: (...a: unknown[]) => generateCoachAdvice(...a),
-  AiError,
 }));
 
 const requireAiBudget = vi.fn();
