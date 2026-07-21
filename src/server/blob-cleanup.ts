@@ -1,6 +1,6 @@
 import "server-only";
 
-import { list, del } from "@vercel/blob";
+import { listBlobs, deleteBlob } from "@/server/blob";
 import { resumeBlobPrefix } from "@/lib/blob-paths";
 
 // Deleting a user cascades their resume_version rows away, but the Blob objects
@@ -14,10 +14,10 @@ export async function deleteResumeBlobsForUser(
   let deleted = 0;
 
   do {
-    const page = await list({ prefix, cursor, mode: "expanded" });
+    const page = await listBlobs({ prefix, cursor });
     const urls = page.blobs.map((blob) => blob.url);
     if (urls.length > 0) {
-      await del(urls);
+      await deleteBlob(urls);
       deleted += urls.length;
     }
     cursor = page.hasMore ? page.cursor : undefined;

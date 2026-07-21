@@ -67,6 +67,7 @@ const eslintConfig = defineConfig([
       "src/server/prisma.ts",
       "src/server/auth.ts",
       "src/server/rate-limit.ts",
+      "src/server/blob.ts",
     ],
     rules: {
       "no-restricted-imports": [
@@ -77,6 +78,11 @@ const eslintConfig = defineConfig([
               name: "@/server/prisma",
               message:
                 "Database access belongs in src/server/data/. auth.ts (adapter wiring) and rate-limit.ts (atomic upsert) are the recorded exceptions.",
+            },
+            {
+              name: "@vercel/blob",
+              message:
+                "Blob storage access belongs in src/server/blob.ts, the way Gemini access belongs in src/server/ai/.",
             },
           ],
         },

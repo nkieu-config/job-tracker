@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { put, del } from "@vercel/blob";
+import { putResume, deleteBlobQuietly } from "@/server/blob";
 import { getSession } from "@/server/get-session";
 import { extractPdfText, PdfTooLongError } from "@/server/pdf";
 import { checkUploadRateLimit } from "@/server/rate-limit";
@@ -118,14 +118,7 @@ export async function POST(request: Request) {
 
   let fileUrl: string;
   try {
-    const blob = await put(resumeBlobPath(session.user.id, file.name), file, {
-      // Private: the blob URL isn't publicly reachable. Resumes are personal
-      // data — they're served only through our authenticated, ownership-scoped
-      // route at /api/resumes/[id]/file.
-      access: "private",
-      addRandomSuffix: true,
-      contentType: ACCEPTED_RESUME_TYPE,
-    });
+    const blob = await putResume(resumeBlobPath(session.user.id, file.name), file);
     fileUrl = blob.url;
   } catch {
     return NextResponse.json(
@@ -144,7 +137,7 @@ export async function POST(request: Request) {
       content,
     });
   } catch (err) {
-    await del(fileUrl).catch(() => {});
+    await deleteBlobQuietly(fileUrl);
     throw err;
   }
 

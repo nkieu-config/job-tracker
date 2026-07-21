@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { get } from "@vercel/blob";
+import { getBlob } from "@/server/blob";
 import { getSession } from "@/server/get-session";
 import { getResumeFileUrl } from "@/server/data/resumes";
 import { ACCEPTED_RESUME_TYPE } from "@/lib/schemas/resume";
@@ -22,7 +22,7 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const result = await get(resume.fileUrl, { access: "private" });
+  const result = await getBlob(resume.fileUrl);
   if (!result || result.statusCode !== 200) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
