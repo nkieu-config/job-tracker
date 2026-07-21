@@ -21,6 +21,68 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    files: ["src/lib/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/server", "@/server/**"],
+              message:
+                "src/lib is isomorphic and ships to the browser — it cannot import server-only code. See docs/architecture.md.",
+            },
+            {
+              group: ["@/components/**", "@/actions/**"],
+              message:
+                "src/lib is the lowest layer; it cannot depend on UI or Server Actions.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/components/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/server", "@/server/**"],
+              message:
+                "Components must not import server-only modules, not even for a type — move the shared shape into src/lib.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/app/**/*.{ts,tsx}", "src/actions/**/*.ts", "src/server/**/*.ts"],
+    ignores: [
+      "src/server/data/**",
+      "src/server/prisma.ts",
+      "src/server/auth.ts",
+      "src/server/rate-limit.ts",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@/server/prisma",
+              message:
+                "Database access belongs in src/server/data/. auth.ts (adapter wiring) and rate-limit.ts (atomic upsert) are the recorded exceptions.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

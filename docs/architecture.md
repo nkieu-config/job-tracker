@@ -144,6 +144,12 @@ condition would have picked; `npm run eval` and the scripts pass
 `--conditions=react-server`. The guard therefore holds exactly where it must —
 in the bundle that reaches a browser.
 
+`server-only` catches a Client Component reaching into `server/`, but says
+nothing about layer *ordering* — `eslint.config.mjs` adds that half: `src/lib`
+may not import `@/server`, `src/components` may not either (not even a type),
+and `@/server/prisma` is reachable only from `src/server/data/`, the Better Auth
+adapter, and the rate limiter.
+
 ### Why this is a single app (and was briefly a monorepo)
 
 The repo went through a deliberate arc, visible in the git history:
