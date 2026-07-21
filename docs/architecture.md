@@ -144,6 +144,12 @@ condition would have picked; `npm run eval` and the scripts pass
 `--conditions=react-server`. The guard therefore holds exactly where it must —
 in the bundle that reaches a browser.
 
+`server-only` catches a Client Component reaching into `server/`, but says
+nothing about layer *ordering* — `eslint.config.mjs` adds that half: `src/lib`
+may not import `@/server`, `src/components` may not either (not even a type),
+and `@/server/prisma` is reachable only from `src/server/data/`, the Better Auth
+adapter, and the rate limiter.
+
 ### Why this is a single app (and was briefly a monorepo)
 
 The repo went through a deliberate arc, visible in the git history:
@@ -280,24 +286,42 @@ HNSW caveat above, is in the [deploy guide](deploy.md).
 | --- | --- |
 | **Prisma 7 dropped the bundled query engine** | Prisma schema + migrations live in `prisma/`; the client generates into `src/generated/` and is configured via `prisma.config.ts`. |
 | **Connection exhaustion in serverless** | On classic Vercel functions each request got its own isolated instance, so every instance opened its own `pg` pool and Postgres ran out of connections (plus TLS/SNI routing issues from a misplaced `-pooler` suffix). The fix at the time was `@neondatabase/serverless` + `@prisma/adapter-neon`, pooling natively over WebSocket. **Since moving to Vercel Fluid compute** — which keeps instances warm and reuses TCP across requests — the app is back on `pg` + `@prisma/adapter-pg`, which is what Neon now recommends for Fluid. Exhaustion is held off by three things the original setup lacked: `attachDatabasePool` from `@vercel/functions` (drains idle connections before an instance suspends), a `max: 5` cap per instance, and the PgBouncer `-pooler` endpoint fronting it all. |
-| **Better Auth pulled a broken Kysely** | Kysely `0.29.2` stopped re-exporting a symbol the adapter imports; pinned to `0.28.17` via an npm `override`. |
+| **Better Auth pulled a broken Kysely** | Kysely `0.29.2` stopped re-exporting a symbol the adapter imports; pinned to `0.28.17` via an npm `override`. **Revisit when Better Auth's peer range drops `^0.28`** — the pin is invisible until it blocks an upgrade, so check it whenever `better-auth` itself is bumped. |
 | **Next 16 renamed `middleware` → `proxy`** | Read the bundled Next docs and adopted the new `proxy.ts` convention — which also reinforced the decision to keep auth checks in the data layer. |
 | **AI output can't be trusted** | The Zod round-trip (schema-out, validate-in) makes off-schema Gemini responses an explicit, recoverable failure instead of a page crash. |
 | **Resume privacy** | Private Blob store + authenticated streaming route; no public URLs. |
 
+## Accepted trade-offs
+
+Known, deliberate limits — recorded so they read as decisions rather than oversights.
+
+- **Resource caps are checked, then written, without a transaction.** `MAX_APPLICATIONS` and `MAX_RESUME_VERSIONS` count before inserting, so two concurrent requests can overshoot the cap slightly. Only a user's own quota is affected, the overshoot is bounded by request concurrency, and closing it would put a transaction on the hot path of every create. Revisit if caps ever gate something billable per row.
+- **Deleting a resume removes the blob before the row.** If the row delete then fails, the row survives pointing at a blob that is gone and the file route 404s — recoverable by deleting again. The inverse order would instead orphan a blob that nothing references and nothing bills against a user, which is the harder leak to notice. The row is what the user sees, so the row wins.
+- **Deadline tone is computed on the UTC day, not the viewer's.** `deadlineTone` derives "today" from the UTC date, and every deadline is rendered with `timeZone: "UTC"`, so the display is internally consistent. A viewer west of UTC can still see "overdue" up to a day before their own wall clock agrees. Fixing it means passing the client timezone into an otherwise static server render; the inconsistency is cosmetic, so it stays.
+- **Email verification is implemented but not enforced.** The verification mail, the token expiry and the sign-in handling for `EMAIL_NOT_VERIFIED` are all wired up, but `requireEmailVerification` stays off until production has a Resend sender on a verified domain. Better Auth runs `sendVerificationEmail` through a background-task wrapper that swallows failures, so enforcing verification while `sendEmail` cannot deliver would let every signup succeed and then lock the account out with no way back. Enabling it is a one-line change once the sender exists; until then the exposure it would close — disposable accounts drawing on the AI and upload budgets — is bounded by the per-user hourly limits that are already enforced.
+- **Account deletion is not exposed over HTTP.** Better Auth's `deleteUser` endpoint stays disabled; accounts are removed with `npm run delete-user`, which deletes the user's resume blobs before the row so nothing is stranded. Deleting a user row directly in the database still leaks its blobs — the script is the supported path.
+
 ## Open questions
 
-- **The HNSW index survives by convention, not by a guard.** "Delete the
-  `DROP INDEX` line by hand" works for one careful person and no further. A CI
-  check that fails when a pending migration drops
-  `resume_version_embedding_hnsw_idx` would turn the convention into something
-  the repo enforces.
 - **The tailoring eval is still a 3-of-6 sample.** Completing it needs a paid
   Gemini key or another day's free-tier quota.
-- **No browser e2e suite yet.** The Playwright helpers that drive the automated
-  screenshots are the foundation; the specs on top of them aren't written.
-- **OAuth sign-in** is on the roadmap and would add the first auth path that
-  isn't email/password.
+- **The action layer has two return conventions and one workflow gap.** Actions
+  consumed by `useActionState` return a named `*State`; those called imperatively
+  return `{ error?: string }`. Both are deliberate, but the workflow layer is
+  genuinely half-adopted: `analyzeApplication` and `computeResumeFit` route
+  through `server/workflows/`, while `autofillFromJd` and `generatePipelineCoach`
+  inline the same orchestration — and the streaming routes cannot use workflows
+  at all, because those return a stream rather than a `WorkflowResult`. Deciding
+  what the workflow layer is *for* comes before any refactor.
+- **`src/server/` root is 19 flat files** mixing infrastructure, policy, auth,
+  domain and I/O, while `ai/`, `data/` and `workflows/` subdirectories already
+  exist. Splitting it would rewrite imports repo-wide, and the lint rules now key
+  off paths, so the reshuffle needs care rather than enthusiasm.
+- **Several UI atoms are hand-rolled at multiple call sites** — a progress
+  track+fill in five places, three of which clamp no minimum width while the
+  other two clamp to different floors; an error paragraph in eleven with two
+  different background tokens; and a status dot at eight sites in two sizes
+  despite `Dot` existing and being used at only two.
 
 ## Related docs
 

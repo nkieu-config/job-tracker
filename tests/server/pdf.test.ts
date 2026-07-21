@@ -58,4 +58,19 @@ describe("extractPdfText", () => {
     await expect(extractPdfText(bytes)).rejects.toThrow("Invalid PDF structure");
     expect(extractText).not.toHaveBeenCalled();
   });
+
+  // A scanned or image-only PDF parses fine but its pages carry no text layer,
+  // so extraction yields only whitespace. The contract is deliberate: hand back
+  // an empty string — the app asks for a readable file rather than falling back
+  // to OCR — not an error and not garbage. Callers key their "no readable text"
+  // handling off exactly this.
+  it("returns an empty string for a scanned PDF whose pages have no text layer", async () => {
+    extractText.mockResolvedValue({ text: "  \n\n\t \r\n " });
+    await expect(extractPdfText(bytes)).resolves.toBe("");
+  });
+
+  it("returns an empty string when extraction yields nothing at all", async () => {
+    extractText.mockResolvedValue({ text: "" });
+    await expect(extractPdfText(bytes)).resolves.toBe("");
+  });
 });

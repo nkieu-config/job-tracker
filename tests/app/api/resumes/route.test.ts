@@ -156,6 +156,21 @@ describe("POST /api/resumes validation", () => {
     expect(res.status).toBe(422);
     expect(put).not.toHaveBeenCalled();
   });
+
+  // A scanned image parses cleanly but extracts to nothing. The app doesn't OCR
+  // it — it asks for a readable file, and must bail before billing a blob for a
+  // resume the fit step could never use.
+  it("rejects a scanned PDF with no readable text (422) before uploading anything", async () => {
+    extractPdfText.mockResolvedValue("");
+    const res = await POST(upload(pdf("%PDF-1.7 scan")));
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({
+      error:
+        "No readable text found in this PDF — it may be a scanned image. Upload a text-based PDF.",
+    });
+    expect(put).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST /api/resumes blob lifecycle", () => {

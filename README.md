@@ -6,7 +6,7 @@
 
 **The job hunt is a data problem. This is the tool I built to solve mine.** An AI-powered job-application tracker that analyzes job descriptions, scores your resume versions against them with vector embeddings, and tailors your bullets — built solo as my capstone project, used daily in my real job search.
 
-**6 AI features, 5 with eval suites · 325 tests + a 5-suite AI eval harness · ~14k lines of strict TypeScript (app, tests, evals)**
+**6 AI features, each with an eval suite · 381 tests + a 6-suite AI eval harness · ~14k lines of strict TypeScript (app, tests, evals)**
 
 ![Dashboard showing application pipeline, response and interview rates, and upcoming deadlines](docs/screenshots/dashboard.png)
 
@@ -76,8 +76,9 @@ Regenerated with `npm run eval`, on real model calls. Generation runs on `gemini
 - **Pipeline coach** — LLM-judge relevance **5/5**, grounding **4.8/5**, actionability **4.4/5**, **zero hallucinations**, and **100%** focus-skill grounding: a model-free check that the skill it tells you to prioritise is a gap actually present in the data, across 5 pipelines.
 - **Form autofill** — **100%** company, role and deadline accuracy (exact match) and **100% schema validity** across 6 job descriptions, scored deterministically with no judge.
 - **Bullet tailoring** — the eval caught the lite model fabricating specifics on this task (grounding 3.83/5, below the gate), so tailoring alone runs on the stronger **`gemini-3.5-flash`** with a prompt tightened to bar unsupported qualifiers. Its fresh scorecard on the new stack is being re-captured; the retired 2.5-flash's earlier 4.83 / 4.67 / 5 no longer applies.
+- **Interview prep** — LLM-judge relevance **5/5**, grounding **4.8/5**, actionability **5/5**, with a model-free check that the sheet obeys its contract (three sections, 5-7 technical questions, 3 behavioral, 3 to ask back, each with an answer key) at **100%** structural validity and **100%** answer-key coverage, across 5 roles. The **20%** hallucination rate is one real catch — the model over-levelled a 3+-year Frontend Engineer role to "senior"; the eval's first run also flagged that the *judge* was over-strict (counting on-topic questions as fabrication), which tightened the metric, not the model.
 
-The judged suites (tailoring, coach) are scored by a separate LLM judge (`gemini-3.5-flash` by default, a different model from the one under test; `EVAL_JUDGE_MODEL` overrides it). Full methodology and per-suite results: [evals/](evals/).
+The judged suites (tailoring, coach, interview) are scored by a separate LLM judge (`gemini-3.5-flash` by default, a different model from the one under test; `EVAL_JUDGE_MODEL` overrides it). Full methodology and per-suite results: [evals/](evals/).
 
 ## Feature tour
 
@@ -140,7 +141,7 @@ Every image on this page is generated from the seeded demo by Playwright — `np
 | Framework | Next.js 16 (App Router, Server Actions, Route Handlers) + TypeScript strict         | One framework covers server-rendered pages, mutations and token streaming              |
 | AI        | Gemini 3.1 Flash Lite (3.5 Flash for bullet tailoring) + `gemini-embedding-001`, in-process from `server/ai/` | Native JSON-schema output, one vendor for generation + embeddings; the eval harness picks the model per task |
 | Database  | PostgreSQL (Neon) + Prisma 7 + pgvector                                             | Vectors live beside the relational rows — ranking is one SQL query, not a second store |
-| Auth      | Better Auth (sessions in Postgres)                                                  | Sessions in my own database, scoped by the same `userId` as everything else            |
+| Auth      | Better Auth (sessions in Postgres; email/password + optional GitHub/Google OAuth)   | Sessions in my own database, scoped by the same `userId` as everything else            |
 | UI        | Tailwind CSS v4, semantic design tokens ([design system](docs/design.md))           | Tokens keep 13 pages consistent without pulling in a component library                 |
 | Storage   | Vercel Blob (private)                                                               | Resume PDFs are private by default, served only through an ownership-scoped route      |
 | Quality   | Zod validation end-to-end · Vitest + Testing Library · AI eval harness · Playwright | The same Zod schemas validate forms, Server Actions and the model's JSON output        |
@@ -175,12 +176,12 @@ Full environment-variable reference, scripts and deploy guide: [docs/setup.md](d
 
 ## Testing & quality
 
-325 tests across two Vitest projects, plus a read-only Playwright smoke suite (its 8 browser tests run separately):
+381 tests across two Vitest projects, plus two Playwright suites (9 browser tests, run separately):
 
 - **Node (server)** — ownership scoping of every Server Action, the JD-analysis cache short-circuit, the pipeline-snapshot aggregation, the resume upload's blob lifecycle including compensating deletes, the page cap that stops a PDF bomb from pinning the function, rate limiting for both AI and auth, embedding batch splitting, and the fence that keeps a job description from being read as prompt instructions.
 - **jsdom (components)** — the streaming UI's save/discard rules and the accessibility invariants of the drag-and-drop board.
-- **Integration (10 of the 325)** — run against a real Postgres and skip when no database is reachable. They cover the raw SQL the mocked unit tests can't reach: the rate limiter's atomic upsert, and the predicate deciding whether a resume holds readable text.
-- **e2e (`npm run test:e2e`)** — a Playwright smoke test walks sign-in, the dashboard, navigation and the auth redirect against a running app; it stays read-only to leave the shared demo untouched.
+- **Integration (10 of the 381)** — run against a real Postgres, and skip locally when no database is reachable. CI always runs them against a `pgvector/pgvector` service container, so the raw SQL the mocked unit tests can't reach stays covered: the rate limiter's atomic upsert, and the predicate deciding whether a resume holds readable text.
+- **e2e (`npm run test:e2e`)** — two Playwright suites against a running app. A read-only smoke test walks sign-in, the dashboard, navigation and the auth redirect on the shared demo without mutating it; a separate suite signs up a throwaway account, drives the full create → edit → delete lifecycle, and deletes the account afterwards — so the mutating paths get real-browser coverage without ever touching the demo.
 
 Security-critical modules — the prompt fence, the admin gate, the AI ownership guard and the PDF page cap among them — are pinned to **100% coverage thresholds** in CI.
 
@@ -216,12 +217,11 @@ npm run screenshots     # regenerate README screenshots via Playwright
 
 Deliberate scope choices — plus one quota constraint — for a portfolio-scale deployment:
 
-- **Interview prep is the one AI feature without an eval suite** — the other five are measured against the scorecard above; an interview-prep suite is the next one to write.
-- **The e2e suite is a read-only smoke test** — `npm run test:e2e` drives a real browser through sign-in, the dashboard, navigation, an application detail page and the auth redirect (`e2e/smoke.spec.ts`). It deliberately skips the AI actions (they spend the shared hourly budget) and the create/edit/delete and upload flows (they mutate the shared demo other visitors see); those paths are covered by the unit and integration tests.
-- **Email/password auth only** — no OAuth providers.
-- **PDF text extraction only** — scanned or image-based PDFs yield no text, and the app asks for a readable file instead of OCR-ing it.
+- **The e2e mutating suite skips the AI actions** — the throwaway-account suite covers create/edit/delete end to end, but not the AI features (they spend the shared hourly budget) or resume upload (it needs real blob storage); those stay covered by the unit and integration tests. The smoke suite is deliberately read-only so it never mutates the shared demo.
+- **OAuth is opt-in, not enabled on the live demo** — GitHub and Google sign-in ship in the code and light up when their credentials are set (`enabledOAuthProviders()` hides an unconfigured provider). The public demo runs email/password + the one-click demo account so there's nothing to configure to try it.
+- **PDF text extraction only** — a scanned or image-only PDF carries no text layer, so the upload is rejected with a "no readable text — upload a text-based PDF" message rather than being OCR-ed.
 
-Next on the roadmap: an interview-prep eval suite, extending the e2e smoke suite to the mutating flows against a throwaway account, and OAuth sign-in.
+Next on the roadmap: OCR fallback for image-only PDFs, and extending the e2e mutating coverage to the resume-upload flow against a throwaway blob store.
 
 ## About
 

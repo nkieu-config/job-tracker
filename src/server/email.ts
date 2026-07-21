@@ -23,18 +23,30 @@ export async function sendEmail({
   text,
 }: SendEmailInput): Promise<void> {
   if (!resend) {
+    if (!emailIsDeliverable) {
+      throw new Error(
+        `Email is not configured (RESEND_API_KEY unset) — cannot deliver "${subject}".`,
+      );
+    }
     console.info(`[email:dev] to=${to} subject=${subject}\n${text}`);
     return;
   }
 
-  const { error } = await resend.emails.send({
-    from: EMAIL_FROM,
-    to,
-    subject,
-    text,
-  });
+  let result;
+  try {
+    result = await resend.emails.send({ from: EMAIL_FROM, to, subject, text });
+  } catch (cause) {
+    console.error(`[email] send threw to=${to} subject=${subject}`, cause);
+    throw new Error(`Email delivery failed for "${subject}".`, { cause });
+  }
 
-  if (error) {
-    console.error(`[email] send failed to=${to} subject=${subject}`, error);
+  if (result.error) {
+    console.error(
+      `[email] send failed to=${to} subject=${subject}`,
+      result.error,
+    );
+    throw new Error(`Email delivery failed for "${subject}".`, {
+      cause: result.error,
+    });
   }
 }

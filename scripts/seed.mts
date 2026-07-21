@@ -134,6 +134,8 @@ if (!userId) {
   process.exit(1);
 }
 
+await ex(`UPDATE "user" SET "emailVerified" = true WHERE id = $1`, [userId], [TEXT]);
+
 // 2. Reset the demo user's data (idempotent re-seed).
 await ex(`DELETE FROM "application" WHERE "userId" = $1`, [userId], [TEXT]);
 await ex(`DELETE FROM "resume_version" WHERE "userId" = $1`, [userId], [TEXT]);

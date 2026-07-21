@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { AiError } from "@/lib/errors";
 
 const updateMany = vi.fn();
 const deleteMany = vi.fn();
@@ -11,7 +12,14 @@ vi.mock("@/server/prisma", () => ({
 }));
 
 const getSession = vi.fn();
-vi.mock("@/server/get-session", () => ({ getSession: () => getSession() }));
+vi.mock("@/server/get-session", () => ({
+  getSession: () => getSession(),
+  requireSession: async () => {
+    const session = await getSession();
+    if (!session) throw new RedirectError("/sign-in");
+    return session;
+  },
+}));
 
 class RedirectError extends Error {}
 vi.mock("next/navigation", () => ({
@@ -21,7 +29,6 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-class AiError extends Error {}
 const analyzeJobDescription = vi.fn();
 const embedText = vi.fn();
 const embedDocument = vi.fn();
@@ -31,7 +38,6 @@ vi.mock("@/server/ai-client", () => ({
   embedText: (...a: unknown[]) => embedText(...a),
   embedDocument: (...a: unknown[]) => embedDocument(...a),
   extractApplicationFields: (...a: unknown[]) => extractApplicationFields(...a),
-  AiError,
 }));
 
 const checkAiRateLimit = vi.fn();

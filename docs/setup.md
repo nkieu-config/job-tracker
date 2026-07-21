@@ -40,8 +40,27 @@ See [.env.example](../.env.example). `.env` files are gitignored.
 | `GEMINI_API_KEY` | From Google AI Studio — server-only, never exposed to the browser |
 | `ADMIN_EMAILS` | Comma-separated emails allowed to view `/dashboard/ai-usage` (optional) |
 | `CRON_SECRET` | Bearer token Vercel Cron uses to call `/api/cron/*` (optional; the route refuses to run when unset) |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth app credentials (optional — see below) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client credentials (optional — see below) |
 
 Optional knobs (`AI_USAGE_DISABLED`, `EVAL_RPM`, `EVAL_MAX_ATTEMPTS`, `EVAL_JUDGE_MODEL`, `BASE_URL`) are documented in `.env.example`.
+
+### Social sign-in (optional)
+
+Email/password works out of the box. To add "Continue with GitHub / Google",
+register an OAuth app with each provider and set both of its variables — a
+provider's button only renders when both are present, so an unconfigured one is
+simply hidden.
+
+The authorized callback (redirect) URL is `<BETTER_AUTH_URL>/api/auth/callback/<provider>`:
+
+| Provider | Register at | Callback URL (local dev) |
+| --- | --- | --- |
+| GitHub | Settings → Developer settings → OAuth Apps | `http://localhost:3000/api/auth/callback/github` |
+| Google | Google Cloud Console → Credentials → OAuth client ID (Web) | `http://localhost:3000/api/auth/callback/google` |
+
+In production, swap `http://localhost:3000` for your deployment URL and add that
+callback to the same OAuth app (providers accept multiple callback URLs).
 
 ## Database branches (Neon)
 
@@ -72,7 +91,6 @@ npm run dev           # Next.js dev server
 npm run build         # production build (web)
 npm run lint          # eslint
 npm run typecheck     # tsc --noEmit
-npm run check         # typecheck (alias)
 npm test              # vitest
 npm run test:coverage # vitest with per-file coverage thresholds
 npm run eval          # AI eval suites (needs GEMINI_API_KEY)
@@ -90,7 +108,7 @@ The three image scripts drive a running app, so start one first — `npm run bui
 
 ## Verifying a build
 
-- Automated: `npm run lint && npm run check && npm test && npm run build`
+- Automated: `npm run lint && npm run typecheck && npm test && npm run build`
 - By hand: follow the [manual QA checklist](manual-qa.md)
 
 ## Related docs

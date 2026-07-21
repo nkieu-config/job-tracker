@@ -90,6 +90,66 @@ ${advice}
   return { rubric, tokens };
 }
 
+const interviewRubricSchema = z.object({
+  relevance: z.number().min(1).max(5),
+  grounded: z.number().min(1).max(5),
+  actionable: z.number().min(1).max(5),
+  fabricated: z.boolean(),
+  fabricatedItems: z.array(z.string()),
+});
+
+export type InterviewRubric = z.infer<typeof interviewRubricSchema>;
+
+const interviewResponseJsonSchema = (() => {
+  const schema = z.toJSONSchema(interviewRubricSchema) as Record<string, unknown>;
+  delete schema["$schema"];
+  return schema;
+})();
+
+// LLM-as-judge for the interview prep sheet. The judge sees only the job
+// description the sheet was generated from, so it can flag any requirement,
+// technology, or responsibility the questions assume but the JD never states.
+export async function judgeInterview(
+  jobDescription: string,
+  sheet: string,
+): Promise<{ rubric: InterviewRubric; tokens: number }> {
+  const ai = getGeminiClient();
+
+  const prompt = `You are a strict evaluator of an AI-generated interview prep sheet. The generator was given ONLY the job description below and produced the SHEET (technical questions, behavioral questions, and questions to ask the interviewer, each with an "answer key"). Score the SHEET on a 1-5 integer scale.
+
+- relevance: do the questions target the specific skills, technologies, and seniority in THIS job description, rather than generic interview questions? (5 = tightly matched, 1 = boilerplate).
+- grounded: do the questions and answer keys stay consistent with what the job description says about the ROLE — its seniority, required experience, and responsibilities — without assuming role facts it never states? (5 = fully consistent, 1 = mostly invented).
+- actionable: would the answer keys and suggested questions genuinely help a candidate prepare? (5 = concrete and useful, 1 = vague).
+- fabricated: true ONLY if the sheet asserts a fact about the ROLE or the CANDIDATE that the job description does not support — for example a seniority level, years of experience, team structure, or a requirement the JD never states. Naming a concrete technology or sub-topic to ASK ABOUT, when it falls within a skill area the JD already lists (e.g. asking about Kubernetes NetworkPolicies for a role that lists Kubernetes), is the generator's job and is NOT fabrication.
+- fabricatedItems: list each unsupported assumption about the role or candidate (empty if none).
+
+Judge only what is written.
+
+JOB DESCRIPTION:
+"""
+${jobDescription}
+"""
+
+SHEET:
+"""
+${sheet}
+"""`;
+
+  const res = await ai.models.generateContent({
+    model: JUDGE_MODEL,
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseJsonSchema: interviewResponseJsonSchema,
+      temperature: 0,
+    },
+  });
+
+  const rubric = interviewRubricSchema.parse(JSON.parse(res.text ?? "{}"));
+  const tokens = res.usageMetadata?.totalTokenCount ?? 0;
+  return { rubric, tokens };
+}
+
 export async function judgeBullets(
   jobDescription: string,
   experience: string,

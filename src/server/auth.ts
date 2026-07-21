@@ -5,11 +5,13 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { prisma } from "@/server/prisma";
 import { postgresRateLimitStorage } from "@/server/auth-rate-limit";
+import { socialProvidersConfig } from "@/server/oauth";
 import { sendEmail } from "@/server/email";
 import { DEMO_EMAIL } from "@/lib/constants/demo";
 
 const SESSION_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 7;
 const SESSION_REFRESH_AFTER_SECONDS = 60 * 60 * 24;
+const SESSION_COOKIE_CACHE_SECONDS = 60 * 5;
 const RESET_TOKEN_EXPIRES_IN_SECONDS = 60 * 60;
 const VERIFICATION_TOKEN_EXPIRES_IN_SECONDS = 60 * 60 * 24;
 
@@ -39,9 +41,14 @@ export const auth = betterAuth({
       });
     },
   },
+  socialProviders: socialProvidersConfig(),
   session: {
     expiresIn: SESSION_EXPIRES_IN_SECONDS,
     updateAge: SESSION_REFRESH_AFTER_SECONDS,
+    cookieCache: {
+      enabled: true,
+      maxAge: SESSION_COOKIE_CACHE_SECONDS,
+    },
   },
   rateLimit: {
     enabled: true,

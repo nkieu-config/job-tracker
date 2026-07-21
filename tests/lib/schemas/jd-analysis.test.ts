@@ -3,6 +3,9 @@ import { z } from "zod";
 import {
   jdAnalysisSchema,
   storedJdAnalysisSchema,
+  MAX_SKILLS,
+  MAX_SKILL_LENGTH,
+  MAX_SUMMARY_LENGTH,
 } from "@/lib/schemas/jd-analysis";
 
 const valid = {
@@ -47,6 +50,45 @@ describe("jdAnalysisSchema (AI output validation)", () => {
     expect(schema.properties?.requiredSkills?.type).toBe("array");
     expect(schema.properties?.seniority?.enum).toContain("senior");
   });
+
+  it("caps how many skills an analysis can carry", () => {
+    const tooMany = Array.from({ length: MAX_SKILLS + 1 }, (_, i) => `skill${i}`);
+    expect(
+      jdAnalysisSchema.safeParse({ ...valid, requiredSkills: tooMany }).success,
+    ).toBe(false);
+    expect(
+      jdAnalysisSchema.safeParse({ ...valid, niceToHave: tooMany }).success,
+    ).toBe(false);
+  });
+
+  it("caps the length of a single skill and of the summary", () => {
+    expect(
+      jdAnalysisSchema.safeParse({
+        ...valid,
+        requiredSkills: ["x".repeat(MAX_SKILL_LENGTH + 1)],
+      }).success,
+    ).toBe(false);
+    expect(
+      jdAnalysisSchema.safeParse({
+        ...valid,
+        summary: "x".repeat(MAX_SUMMARY_LENGTH + 1),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("passes the caps through to Gemini's JSON schema", () => {
+    const schema = z.toJSONSchema(jdAnalysisSchema) as {
+      properties?: Record<
+        string,
+        { maxItems?: number; maxLength?: number; items?: { maxLength?: number } }
+      >;
+    };
+    expect(schema.properties?.requiredSkills?.maxItems).toBe(MAX_SKILLS);
+    expect(schema.properties?.requiredSkills?.items?.maxLength).toBe(
+      MAX_SKILL_LENGTH,
+    );
+    expect(schema.properties?.summary?.maxLength).toBe(MAX_SUMMARY_LENGTH);
+  });
 });
 
 describe("storedJdAnalysisSchema", () => {
@@ -57,5 +99,13 @@ describe("storedJdAnalysisSchema", () => {
 
   it("stays valid without skillMatches", () => {
     expect(storedJdAnalysisSchema.parse(valid)).toEqual(valid);
+  });
+
+  it("caps skillMatches the same way as the skill lists", () => {
+    const tooMany = Array.from({ length: MAX_SKILLS + 1 }, (_, i) => `skill${i}`);
+    expect(
+      storedJdAnalysisSchema.safeParse({ ...valid, skillMatches: tooMany })
+        .success,
+    ).toBe(false);
   });
 });

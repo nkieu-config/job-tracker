@@ -2,6 +2,12 @@ import "server-only";
 
 import { after } from "next/server";
 
+import {
+  EMBEDDING_MODEL,
+  GENERATION_MODEL,
+  TAILORING_MODEL,
+} from "@/server/ai/models";
+
 export const AI_FEATURES = [
   "analyze",
   "embed",
@@ -14,12 +20,14 @@ export const AI_FEATURES = [
 export type AiFeature = (typeof AI_FEATURES)[number];
 
 // Approximate Gemini pricing, USD per 1M tokens. Update from current rates —
-// this drives the cost estimate on the AI-usage dashboard only.
+// this drives the cost estimate on the AI-usage dashboard only. Keyed off the
+// model constants so a swap in models.ts can't leave a live model unpriced;
+// retired models stay listed so historical ai_usage rows keep their cost.
 export const PRICING = {
-  "gemini-3.1-flash-lite": { input: 0.1, output: 0.4 },
-  "gemini-3.5-flash": { input: 0.3, output: 2.5 },
+  [GENERATION_MODEL]: { input: 0.1, output: 0.4 },
+  [TAILORING_MODEL]: { input: 0.3, output: 2.5 },
+  [EMBEDDING_MODEL]: { input: 0.15, output: 0 },
   "gemini-2.5-flash": { input: 0.3, output: 2.5 },
-  "gemini-embedding-001": { input: 0.15, output: 0 },
 } satisfies Record<string, { input: number; output: number }>;
 
 type KnownModel = keyof typeof PRICING;

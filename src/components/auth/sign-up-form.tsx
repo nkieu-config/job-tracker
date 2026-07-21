@@ -4,10 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signUp } from "@/lib/auth-client";
 import { DemoButton } from "@/components/auth/demo-button";
+import { SocialButtons } from "@/components/auth/social-buttons";
 import { Button, buttonClass } from "@/components/ui/button";
 import { inputClass, labelClass } from "@/components/ui/form-styles";
+import type { OAuthProviderId } from "@/lib/oauth-providers";
 
-export function SignUpForm() {
+export function SignUpForm({
+  oauthProviders = [],
+}: {
+  oauthProviders?: OAuthProviderId[];
+}) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -98,15 +104,22 @@ export function SignUpForm() {
         <span className="h-px flex-1 bg-hairline" />
       </div>
 
-      <DemoButton
-        onError={setError}
-        disabled={loading}
-        className={buttonClass({
-          variant: "outline",
-          size: "lg",
-          className: "w-full",
-        })}
-      />
+      <div className="flex flex-col gap-3">
+        <SocialButtons
+          providers={oauthProviders}
+          onError={setError}
+          disabled={loading}
+        />
+        <DemoButton
+          onError={setError}
+          disabled={loading}
+          className={buttonClass({
+            variant: "outline",
+            size: "lg",
+            className: "w-full",
+          })}
+        />
+      </div>
     </>
   );
 }

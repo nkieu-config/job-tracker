@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { emailIsDeliverable } from "@/server/email";
+import { enabledOAuthProviders } from "@/server/oauth";
 import { SignInForm } from "@/components/auth/sign-in-form";
+import { LogoMark } from "@/components/ui/logo";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -19,11 +21,7 @@ export default async function SignInPage({
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
           <Link href="/">
-            <div className="w-12 h-12 bg-primary rounded-md flex items-center justify-center">
-              <span className="text-on-primary font-bold text-2xl leading-none">
-                J
-              </span>
-            </div>
+            <LogoMark size="lg" />
           </Link>
         </div>
         <h1 className="font-display-md text-ink text-center tracking-tight mb-2">
@@ -36,6 +34,7 @@ export default async function SignInPage({
         <SignInForm
           passwordWasReset={reset === "1"}
           canResetPassword={emailIsDeliverable}
+          oauthProviders={enabledOAuthProviders()}
         />
 
         <p className="mt-8 text-center font-sans text-body text-ink-mute">

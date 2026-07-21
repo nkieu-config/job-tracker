@@ -26,6 +26,7 @@ is the reference. Two of them behave differently in production:
 | --- | --- |
 | `BETTER_AUTH_URL` | Your deployment URL, not `localhost`. Better Auth rejects a request whose origin doesn't match this, so a stale value fails every sign-in with "Invalid origin". |
 | `DATABASE_URL` | Must be the **pooled** endpoint — see the warning below. |
+| `GITHUB_CLIENT_ID` / `GOOGLE_CLIENT_ID` (+ secrets) | Optional. If set, add `<deployment URL>/api/auth/callback/<provider>` to the OAuth app's authorized callbacks, or the provider rejects the redirect. |
 
 Redeploy Vercel after env changes (new deployments only pick up new vars).
 
