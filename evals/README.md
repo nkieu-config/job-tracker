@@ -15,7 +15,7 @@ Reads `.env` for `GEMINI_API_KEY`. Writes a scorecard to
 
 ## What it measures
 
-Five suites, each demonstrating a different evaluation technique.
+Six suites, each demonstrating a different evaluation technique.
 
 ### 1. `jd-analysis` — reference-based structured extraction
 
@@ -71,6 +71,15 @@ Runs `extractApplicationFields` over labelled job descriptions and scores the
 company and role (case-insensitively) and the deadline (exactly) against the gold
 values. Deterministic — it needs only generation calls, no second model.
 
+### 6. `interview` — LLM-as-judge + a structural contract check
+
+Collects the streamed `interviewPrepStream` output and scores it two ways. An LLM
+judge rates relevance / grounding / actionability (1–5) and flags requirements the
+sheet assumes but the JD never states. Separately — with no model — the sheet is
+parsed back against its prompt contract: all three sections present, 5–7 technical
+questions, 3 behavioral, 3 to ask the interviewer, each with an answer key. The
+structural check is the one a lenient judge can't inflate.
+
 ## Results
 
 Generation on `gemini-3.1-flash-lite` + `gemini-embedding-001` (tailoring on
@@ -85,6 +94,7 @@ projects, which forced this migration and re-capture.
 | **coach** | LLM-judge relevance / grounding / actionability (1–5) · focus-skill grounding · hallucination rate (n=5) | Captured | **5 / 4.8 / 4.4**, focus grounded **100%**, hallucination rate **0%** |
 | **autofill** | company / role / deadline extraction accuracy · schema-valid rate (n=6) | Captured | company / role / deadline **100% / 100% / 100%**, schema-valid **100%** |
 | **tailoring** | LLM-as-judge relevance / grounding / formatting (1–5) · hallucination rate (n=6) | Re-capturing | flash-lite grounded only 3.83/5 → moved to `gemini-3.5-flash` + a grounding-tightened prompt; fresh numbers pending |
+| **interview** | LLM-judge relevance / grounding / actionability (1–5) · structural validity · answer-key coverage · hallucination rate (n=5) | Captured | **5 / 4.8 / 5**, structure valid **100%**, answer-key coverage **100%**, hallucination rate **20%** (one item over-levelled a mid-level role to senior — see note) |
 
 > [!NOTE]
 > The eval doing its job: it caught that `gemini-3.1-flash-lite`, fine for the
@@ -93,10 +103,22 @@ projects, which forced this migration and re-capture.
 > `gemini-3.5-flash` and its prompt tightened — a model choice made by
 > measurement, not assumption.
 
+> [!NOTE]
+> The interview suite forced a metric fix, not a model fix. The first run scored
+> a 40% hallucination rate — but half of that was the judge applying the
+> tailoring/coach rule ("any specific not in the JD is fabricated") to a task
+> where naming a concrete topic to ask about (e.g. Kubernetes NetworkPolicies
+> for a role that lists Kubernetes) is the whole point. The judge's `fabricated`
+> criterion was narrowed to *unsupported assumptions about the role or
+> candidate*; the rate fell to 20% and the one remaining flag is real — the
+> model over-levelled a 3+-year Frontend Engineer role to "senior" in a
+> behavioral question. Same lesson as tailoring: the eval measures, then
+> something changes.
+
 > [!IMPORTANT]
 > The Gemini **free tier caps generation at 20 requests/day**. The judged suites
 > also need `EVAL_JUDGE_MODEL` pointed at a served model (e.g. `gemini-3.5-flash`)
-> since `gemini-2.5-pro` is no longer free. Running all five in one day is close
+> since `gemini-2.5-pro` is no longer free. Running all six in one day is close
 > to the cap; `skill-match` runs on the separate embeddings quota. Excluded items
 > (e.g. a call the API never answered) are reported as such, never silently
 > scored. Use `-- --n=<k>` to subset, or a paid key, to run more freely.

@@ -38,6 +38,15 @@ export const THRESHOLDS: Record<string, Threshold[]> = {
     { metric: "focus grounded", min: 0.8 },
     { metric: "hallucination rate", max: 0.2 },
   ],
+  interview: [
+    { metric: "relevance /5", min: 3.5 },
+    { metric: "grounded /5", min: 4 },
+    { metric: "actionable /5", min: 3.5 },
+    // The sheet's shape (three sections, 5-7 technical questions, 3 + 3) is a
+    // model-free check on the prompt contract, so hold it high.
+    { metric: "structure valid", min: 0.8 },
+    { metric: "hallucination rate", max: 0.2 },
+  ],
   autofill: [
     { metric: "company accuracy", min: 0.8 },
     // Role phrasing varies more than a company name, so allow a little slack.

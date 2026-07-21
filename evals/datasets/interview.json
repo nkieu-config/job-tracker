@@ -1,0 +1,27 @@
+[
+  {
+    "id": "interview-senior-backend",
+    "role": "Senior Backend Engineer",
+    "jobDescription": "We're hiring a Senior Backend Engineer to own core services powering our payments platform. You'll design and operate Go microservices behind gRPC, model data in PostgreSQL, and keep p99 latency low under heavy write load. Responsibilities include leading the migration from a monolith to event-driven services on Kafka, setting up idempotent payment flows, and mentoring two mid-level engineers. We care about observability (OpenTelemetry, Grafana), safe schema migrations, and on-call ownership. Requirements: 5+ years backend, strong SQL and concurrency fundamentals, experience with distributed transactions and retries, and a track record of shipping reliable systems in production."
+  },
+  {
+    "id": "interview-frontend-react",
+    "role": "Frontend Engineer",
+    "jobDescription": "Join our product team as a Frontend Engineer building a design-heavy analytics dashboard in React and TypeScript. You'll implement complex data tables and charts, own accessibility (WCAG 2.1 AA), and optimize bundle size and runtime performance for large datasets. Day to day you'll work in Next.js with the App Router, collaborate closely with designers in Figma, and write component tests with Testing Library and Playwright. We value strong CSS fundamentals, thoughtful state management, and attention to keyboard and screen-reader support. Requirements: 3+ years building production React apps, solid TypeScript, and experience shipping accessible, responsive interfaces."
+  },
+  {
+    "id": "interview-data-engineer",
+    "role": "Data Engineer",
+    "jobDescription": "We are looking for a Data Engineer to build and maintain the pipelines feeding our analytics and ML teams. You'll develop batch and streaming jobs in Python and Spark, orchestrate workflows with Airflow, and model a dbt warehouse on Snowflake. The role owns data quality: writing tests, monitoring freshness, and handling schema evolution across upstream sources. You'll partner with analysts to expose clean, well-documented tables. Requirements: strong SQL and Python, experience with a workflow orchestrator, understanding of partitioning and file formats (Parquet), and a pragmatic approach to reliability and cost."
+  },
+  {
+    "id": "interview-newgrad-fullstack",
+    "role": "New Grad Software Engineer",
+    "jobDescription": "Our early-careers program is hiring New Grad Software Engineers for full-stack product teams. You'll ship features across a TypeScript stack (React on the front end, Node.js services on the back end) with mentorship and code review from senior engineers. We look for strong CS fundamentals — data structures, algorithms, and a working understanding of databases and HTTP — plus curiosity and clear communication. Internship or project experience is welcome. This is a growth role: we expect you to learn quickly, ask good questions, and take ownership of small features end to end. No specific years of experience required."
+  },
+  {
+    "id": "interview-devops-sre",
+    "role": "Site Reliability Engineer",
+    "jobDescription": "We're hiring an SRE to keep a Kubernetes-based platform reliable and fast. You'll own infrastructure as code with Terraform, manage EKS clusters and Helm releases, and build CI/CD pipelines. A big part of the role is reliability engineering: defining SLOs, tuning alerting to cut noise, running blameless postmortems, and automating away toil. You'll work with developers to improve deploy safety (canaries, rollbacks) and observability across metrics, logs, and traces. Requirements: solid Linux and networking fundamentals, production Kubernetes experience, comfort scripting in Go or Python, and an on-call mindset."
+  }
+]
