@@ -4,13 +4,13 @@ import { prisma } from "@/server/prisma";
 import type { CoachAdvice } from "@/lib/schemas/coach";
 import type { Prisma } from "@/generated/prisma/client";
 
-export type CoachState = {
+export type CoachRow = {
   coachAdvice: Prisma.JsonValue | null;
   coachHash: string | null;
   coachAt: Date | null;
 };
 
-export function getCoachState(userId: string): Promise<CoachState | null> {
+export function getCoachState(userId: string): Promise<CoachRow | null> {
   return prisma.user.findUnique({
     where: { id: userId },
     select: { coachAdvice: true, coachHash: true, coachAt: true },
