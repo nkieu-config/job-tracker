@@ -1,7 +1,7 @@
 import "server-only";
 
 // Public AI surface for Server Actions and Route Handlers. The Gemini calls
-// now run in-process (previously a separate Express service) — see lib/ai/*.
+// now run in-process (previously a separate Express service) — see server/ai/*.
 export { analyzeJobDescription } from "./ai/analyze";
 export { generateCoachAdvice } from "./ai/coach";
 export { extractApplicationFields } from "./ai/extract";

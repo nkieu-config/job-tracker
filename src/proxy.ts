@@ -4,7 +4,7 @@ import { getSessionCookie } from "better-auth/cookies";
 // OPTIMISTIC auth gate only — redirects obviously-unauthenticated users
 // early for a better UX. This is NOT a security boundary: it only checks
 // that a session cookie EXISTS, not that it is valid. The real check lives
-// in the data/page layer (see lib/get-session.ts).
+// in the data/page layer (see server/get-session.ts).
 //
 // Background: CVE-2025-29927 let attackers bypass Next.js middleware by
 // forging a header, so middleware/proxy must never be the only auth check.

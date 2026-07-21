@@ -303,17 +303,25 @@ Known, deliberate limits — recorded so they read as decisions rather than over
 
 ## Open questions
 
-- **The HNSW index survives by convention, not by a guard.** "Delete the
-  `DROP INDEX` line by hand" works for one careful person and no further. A CI
-  check that fails when a pending migration drops
-  `resume_version_embedding_hnsw_idx` would turn the convention into something
-  the repo enforces.
 - **The tailoring eval is still a 3-of-6 sample.** Completing it needs a paid
   Gemini key or another day's free-tier quota.
-- **No browser e2e suite yet.** The Playwright helpers that drive the automated
-  screenshots are the foundation; the specs on top of them aren't written.
-- **OAuth sign-in** is on the roadmap and would add the first auth path that
-  isn't email/password.
+- **The action layer has two return conventions and one workflow gap.** Actions
+  consumed by `useActionState` return a named `*State`; those called imperatively
+  return `{ error?: string }`. Both are deliberate, but the workflow layer is
+  genuinely half-adopted: `analyzeApplication` and `computeResumeFit` route
+  through `server/workflows/`, while `autofillFromJd` and `generatePipelineCoach`
+  inline the same orchestration — and the streaming routes cannot use workflows
+  at all, because those return a stream rather than a `WorkflowResult`. Deciding
+  what the workflow layer is *for* comes before any refactor.
+- **`src/server/` root is 19 flat files** mixing infrastructure, policy, auth,
+  domain and I/O, while `ai/`, `data/` and `workflows/` subdirectories already
+  exist. Splitting it would rewrite imports repo-wide, and the lint rules now key
+  off paths, so the reshuffle needs care rather than enthusiasm.
+- **Several UI atoms are hand-rolled at multiple call sites** — a progress
+  track+fill in five places, three of which clamp no minimum width while the
+  other two clamp to different floors; an error paragraph in eleven with two
+  different background tokens; and a status dot at eight sites in two sizes
+  despite `Dot` existing and being used at only two.
 
 ## Related docs
 
