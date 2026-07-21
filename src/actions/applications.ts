@@ -8,6 +8,9 @@ import {
   applicationInputSchema,
   applicationInputFromFormData,
   APPLICATION_STATUSES,
+  MAX_TAILORED_EXPERIENCE,
+  MAX_TAILORED_BULLETS,
+  MAX_INTERVIEW_PREP,
   type ApplicationInput,
   type ApplicationStatus,
 } from "@/lib/schemas/application";
@@ -213,8 +216,8 @@ export async function saveTailoredBullets(
   const session = await requireSession();
 
   const updated = await updateApplicationForUser(id, session.user.id, {
-    tailoredExperience: experience.slice(0, 4000),
-    tailoredBullets: bullets.slice(0, 8000),
+    tailoredExperience: experience.slice(0, MAX_TAILORED_EXPERIENCE),
+    tailoredBullets: bullets.slice(0, MAX_TAILORED_BULLETS),
     tailoredAt: new Date(),
   });
   if (!updated) {
@@ -232,7 +235,7 @@ export async function saveInterviewPrep(
   const session = await requireSession();
 
   const updated = await updateApplicationForUser(id, session.user.id, {
-    interviewPrep: content.slice(0, 12000),
+    interviewPrep: content.slice(0, MAX_INTERVIEW_PREP),
     interviewPrepAt: new Date(),
   });
   if (!updated) {

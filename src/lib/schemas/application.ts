@@ -63,6 +63,13 @@ export type ApplicationMutation =
   | { interviewPrep: string; interviewPrepAt: Date }
   | { analysis: StoredJdAnalysis; analysisHash: string; analyzedAt: Date };
 
+// Storage caps for text the app generated itself. These truncate rather than
+// reject: the content arrives from a stream the user just watched, so losing
+// the tail beats losing all of it.
+export const MAX_TAILORED_EXPERIENCE = 4000;
+export const MAX_TAILORED_BULLETS = 8000;
+export const MAX_INTERVIEW_PREP = 12000;
+
 export function applicationInputFromFormData(formData: FormData) {
   return {
     company: formData.get("company"),
