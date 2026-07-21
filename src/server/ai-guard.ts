@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { ApplicationModel } from "@/generated/prisma/models";
-import { prisma } from "@/server/prisma";
+import { getApplication } from "@/server/data/applications";
 import { checkAiRateLimit } from "@/server/rate-limit";
 
 // A denial carries both wordings a caller might need: Server Actions surface
@@ -32,9 +32,7 @@ export async function requireApplicationWithJd(
   userId: string,
   verb: string,
 ): Promise<AiGuardResult> {
-  const application = await prisma.application.findFirst({
-    where: { id: applicationId, userId },
-  });
+  const application = await getApplication(applicationId, userId);
   if (!application) {
     return { ok: false, denial: aiDenial("Application not found.", 404) };
   }
