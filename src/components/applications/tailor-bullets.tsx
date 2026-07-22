@@ -67,7 +67,7 @@ export function TailorBullets({
         <div className="flex flex-col gap-2">
           <div
             aria-live="polite"
-            className="whitespace-pre-wrap rounded-xl border border-hairline bg-canvas p-6 font-sans text-body-lg text-ink"
+            className="whitespace-pre-wrap rounded-xl border border-hairline bg-canvas p-6 font-sans text-body-lg leading-relaxed text-ink"
           >
             {output}
             {loading && <span className="animate-pulse">▍</span>}

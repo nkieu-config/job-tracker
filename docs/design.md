@@ -52,7 +52,7 @@ properties the dark palette redefines. See
 | --- | --- | --- |
 | Brand | `primary`, `primary-press`, `on-primary` | Filled buttons, wordmark, active nav, accent text |
 | Link | `link-blue`, `link-hover` | Inline links — the only non-aubergine body colour |
-| Surface | `canvas`, `canvas-lavender`, `canvas-lavender-hover`, `canvas-error`, `surface-hover` | `canvas` is the card; `canvas-lavender` is the page beneath it |
+| Surface | `canvas`, `canvas-lavender`, `canvas-lavender-hover`, `surface-hover` | `canvas` is the card; `canvas-lavender` is the page beneath it |
 | Line | `hairline` | 1px borders and dividers — the workhorse |
 | Text | `ink`, `ink-mute` | Body and secondary; `ink` is also the focus ring |
 | Semantic | `semantic-{error,success,warning}` + `-tint` | Status feedback, never decoration |

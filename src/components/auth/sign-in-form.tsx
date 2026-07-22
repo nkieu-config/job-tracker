@@ -98,7 +98,7 @@ export function SignInForm({
         {error && (
           <p
             role="alert"
-            className="rounded-lg bg-canvas-error px-4 py-3 text-body text-semantic-error font-medium"
+            className="rounded-lg bg-semantic-error-tint px-4 py-3 text-body text-semantic-error font-medium"
           >
             {error}
           </p>
