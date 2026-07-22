@@ -51,10 +51,10 @@ export default async function DashboardLayout({
         <header className="flex items-center justify-between gap-3 border-b border-hairline bg-canvas px-4 py-3 lg:hidden">
           <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
             <LogoMark size="md" />
+            <span className="font-sans text-body-lg font-semibold tracking-tight text-ink">
+              Margin
+            </span>
           </Link>
-          <nav aria-label="Main" className="min-w-0">
-            <DashboardNav orientation="horizontal" isAdmin={isAdmin} />
-          </nav>
           <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
             <SignOutButton />
@@ -64,10 +64,19 @@ export default async function DashboardLayout({
         <main
           id="main-content"
           tabIndex={-1}
-          className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8 lg:py-12 focus:outline-none"
+          className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-8 sm:px-8 lg:py-12 lg:pb-12 focus:outline-none"
         >
           {children}
         </main>
+
+        {/* Primary navigation sits within thumb reach on a phone; on the header
+            it is the furthest point from where the hand actually is. */}
+        <nav
+          aria-label="Main"
+          className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-canvas pb-[env(safe-area-inset-bottom)] lg:hidden"
+        >
+          <DashboardNav orientation="bottom" isAdmin={isAdmin} />
+        </nav>
       </div>
     </div>
   );
