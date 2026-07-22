@@ -4,6 +4,7 @@ import { getSession } from "@/server/get-session";
 import { isAdminEmail } from "@/server/admin";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
+import { CommandPalette } from "@/components/dashboard/command-palette";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SkipLink } from "@/components/ui/skip-link";
 import { LogoMark } from "@/components/ui/logo";
@@ -24,6 +25,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex flex-1 bg-canvas-lavender font-sans">
       <SkipLink />
+      <CommandPalette />
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col justify-between border-r border-hairline bg-canvas px-4 py-6 lg:flex">
         <div className="flex flex-col gap-8">
           <Link href="/dashboard" className="flex items-center gap-2 px-2">
@@ -37,6 +39,9 @@ export default async function DashboardLayout({
           </nav>
         </div>
         <div className="flex flex-col gap-3 border-t border-hairline pt-4">
+          <span className="px-2 font-mono text-fine text-ink-mute">
+            ⌘K to jump anywhere
+          </span>
           <span className="truncate px-2 text-caption text-ink-mute">
             {session.user.email}
           </span>

@@ -86,6 +86,17 @@ export function getUpcomingDeadlines(userId: string, limit = 5) {
   });
 }
 
+// Just enough of each application to find it by typing: no job descriptions, no
+// analyses, no prep sheets.
+export function getApplicationIndex(userId: string, limit = MAX_APPLICATIONS) {
+  return prisma.application.findMany({
+    where: { userId },
+    select: { id: true, role: true, company: true, status: true },
+    orderBy: { updatedAt: "desc" },
+    take: limit,
+  });
+}
+
 // The agenda only needs to know *whether* a posting, an analysis and a prep
 // sheet exist, so the booleans are computed in Postgres. Selecting the columns
 // themselves would drag every job description and prep sheet across the wire to
