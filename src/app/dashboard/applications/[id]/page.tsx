@@ -19,6 +19,7 @@ import { MatchPanel } from "@/components/applications/match-panel";
 import { TailorBullets } from "@/components/applications/tailor-bullets";
 import { InterviewPrep } from "@/components/applications/interview-prep";
 import { PostingPane } from "@/components/applications/posting-pane";
+import { MarkedPosting } from "@/components/applications/marked-posting";
 
 export async function generateMetadata({
   params,
@@ -83,6 +84,16 @@ export default async function ApplicationDetailPage({
   const deadlineToneValue = application.deadline
     ? deadlineTone(application.deadline)
     : null;
+
+  // Only required skills are marked. A nice-to-have is not something the
+  // posting demands of you, so highlighting it would say something the data
+  // does not.
+  const postingSkills = analysis
+    ? analysis.requiredSkills.map((skill) => ({
+        skill,
+        matched: Boolean(gap?.matched.includes(skill)),
+      }))
+    : [];
 
   const tabs: DeskTab[] = [
     {
@@ -154,9 +165,12 @@ export default async function ApplicationDetailPage({
             Job posting
           </h2>
           {hasJd ? (
-            <p className="mt-3 whitespace-pre-wrap font-serif text-body-lg leading-loose text-ink">
-              {application.jobDescription}
-            </p>
+            <div className="mt-3">
+              <MarkedPosting
+                text={application.jobDescription!}
+                skills={postingSkills}
+              />
+            </div>
           ) : (
             <div className="mt-3">
               <EmptyState className="p-8">
