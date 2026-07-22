@@ -65,7 +65,7 @@ Full deep-dive — system design, data model, decision rationale, challenges-and
 - **Defense-in-depth auth.** Middleware does an optimistic cookie check, but every page, Server Action and route handler independently re-verifies the session and scopes queries by `userId` — a design that survives CVE-2025-29927, the Next.js middleware bypass.
 - **Vector search in the database, not the app.** Embeddings live in Postgres `vector(768)` columns behind an HNSW index; resume ranking is one raw-SQL cosine-distance query, not an application-side similarity loop.
 - **The AI marks up the document instead of reporting on it.** The analysis returns skill names; the app locates each one as a span in the posting and highlights it in place. A spike over the 15 labelled job descriptions in `evals/datasets`, run against real model output rather than gold labels, located **97.4%** of returned skills — and the two it could not are both cases where the model summarised a phrase ("deploying models as services" → "Model Deployment") rather than quoting one. Those are reported separately as read-but-not-quoted, so a highlight always means *the posting says this*. The locator's strictness doubles as a filter on over-extraction: it declines to highlight a job title that merely resembles a skill.
-- **Accessibility is a gate, not an aspiration.** [`e2e/a11y.spec.ts`](e2e/a11y.spec.ts) runs axe over every screen a visitor lands on and fails on any serious or critical violation. It has already earned its place twice: it caught the paper palette's muted ink at **4.13:1** against the page (below AA), and a scrollable posting pane that a mouse could scroll and a keyboard could not.
+- **Accessibility is a gate, not an aspiration.** [`e2e/a11y.spec.ts`](e2e/a11y.spec.ts) runs axe over every screen a visitor lands on and fails on any serious or critical violation, plus the keyboard paths through the desk tabs and the command palette. It earned its place on its first run: it caught a candidate palette whose muted ink measured **4.13:1** against the page — under AA, and invisible to the eye — and a posting pane that scrolled under a mouse but could not be reached by keyboard at all.
 - **Charts are hand-rolled SVG, not a charting library.** The dashboard's weekly-activity bars and fit ranking are built from primitives (pure bucketing/scale helpers, unit-tested) so they inherit the design tokens — theme-aware in light and dark, keyboard-navigable with an `sr-only` data table — and add zero KB to the bundle.
 - **AI behind one boundary.** All Gemini access lives in a single `server/ai/` module called only from server code, so the API key never reaches the client and there is exactly one place to meter, validate and mock.
 - **Streaming end to end.** Gemini's chunk iterator is piped straight into a Route Handler `ReadableStream` → browser, with an end-of-stream status frame so a dropped connection can never silently persist a truncated result.
@@ -99,9 +99,7 @@ The judged suites (tailoring, coach, interview) are scored by a separate LLM jud
 | **Resume versions**  | PDF upload (content-type and magic-byte checked), text extraction, private Vercel Blob storage                                    |
 | **AI observability** | Admin page tracking tokens and cost per AI feature; a shared hourly AI budget per user                                            |
 
-Two of the AI features stream. Here is bullet tailoring as it actually runs — a real recording of the demo account, not a mockup:
-
-![Resume bullets streaming in token by token as the model rewrites experience against the job description](docs/screenshots/tailor-streaming.gif)
+Two of the AI features stream — bullet tailoring and the interview prep sheet — rendering token by token as the model writes.
 
 <details>
 <summary>📸 More screenshots — Today, the drill, the board and the landing page</summary>

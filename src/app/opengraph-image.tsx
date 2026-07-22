@@ -16,8 +16,8 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px",
-          backgroundColor: "#f9f7f1",
-          color: "#26231d",
+          backgroundColor: "#4a154b",
+          color: "#ffffff",
           fontFamily: "sans-serif",
         }}
       >
@@ -27,8 +27,8 @@ export default function OpengraphImage() {
               width: "88px",
               height: "88px",
               borderRadius: "20px",
-              backgroundColor: "#2b2721",
-              color: "#fbf9f3",
+              backgroundColor: "#ffffff",
+              color: "#4a154b",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -57,7 +57,7 @@ export default function OpengraphImage() {
             style={{
               display: "flex",
               backgroundColor: "#ffdb4d",
-              color: "#26231d",
+              color: "#221a26",
               fontSize: "30px",
               fontWeight: 600,
               padding: "10px 22px",
@@ -70,7 +70,7 @@ export default function OpengraphImage() {
             style={{
               display: "flex",
               backgroundColor: "#ffdb4d",
-              color: "#26231d",
+              color: "#221a26",
               fontSize: "30px",
               fontWeight: 600,
               padding: "10px 22px",
@@ -82,12 +82,12 @@ export default function OpengraphImage() {
           <div
             style={{
               display: "flex",
-              color: "#b0392c",
+              color: "#ffb4a2",
               fontSize: "30px",
               fontWeight: 600,
               padding: "10px 22px",
               borderRadius: "6px",
-              borderBottom: "5px solid #b0392c",
+              borderBottom: "5px solid #ffb4a2",
             }}
           >
             WebGL
@@ -97,7 +97,7 @@ export default function OpengraphImage() {
           style={{
             marginTop: "40px",
             fontSize: "30px",
-            color: "#7a7264",
+            color: "#d9bdde",
             maxWidth: "900px",
           }}
         >
