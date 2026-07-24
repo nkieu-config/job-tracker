@@ -4,6 +4,8 @@ export type ButtonVariant =
   | "primary"
   | "secondary"
   | "outline"
+  | "on-brand"
+  | "outline-on-brand"
   | "ghost"
   | "danger"
   | "danger-solid";
@@ -17,6 +19,13 @@ const VARIANT: Record<ButtonVariant, string> = {
   secondary: "bg-canvas-lavender text-ink hover:bg-canvas-lavender-hover",
   outline:
     "bg-canvas text-primary border-2 border-primary hover:bg-canvas-lavender",
+  // The two actions inside the aubergine band. `primary` is the band's own
+  // colour and would vanish into it; `ghost` is a light chip and would float on
+  // it. Both of these borrow the band's foreground instead — solid for the
+  // action being asked for, outlined for the one beside it.
+  "on-brand": "bg-on-surface-brand text-surface-brand hover:bg-on-surface-brand/90",
+  "outline-on-brand":
+    "bg-transparent text-on-surface-brand border-2 border-on-surface-brand hover:bg-on-surface-brand/12",
   ghost: "bg-canvas text-ink border border-hairline hover:bg-canvas-lavender",
   danger:
     "bg-semantic-error-tint text-semantic-error hover:bg-semantic-error-hover",

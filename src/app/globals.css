@@ -21,6 +21,16 @@
   --primary-press: #611f69;
   --on-primary: #ffffff;
 
+  /* The brand aubergine as a *surface*, deliberately not theme-swapped. As an
+     accent `--primary` lightens in dark mode so it can carry text and borders
+     on a dark page; as a full-bleed band that same lightening would put a
+     glowing mauve slab in the middle of a dark document. #4a154b is dark
+     enough to hold white type in either theme, so the closing band reads the
+     same way in both. Declared once and never overridden below. */
+  --surface-brand: #4a154b;
+  --on-surface-brand: #ffffff;
+  --on-surface-brand-mute: #d9bdde;
+
   --ink: #221a26;
   --ink-mute: #5f5566;
 
@@ -139,6 +149,10 @@
   --color-primary: var(--primary);
   --color-primary-press: var(--primary-press);
   --color-on-primary: var(--on-primary);
+
+  --color-surface-brand: var(--surface-brand);
+  --color-on-surface-brand: var(--on-surface-brand);
+  --color-on-surface-brand-mute: var(--on-surface-brand-mute);
 
   --color-ink: var(--ink);
   --color-ink-mute: var(--ink-mute);
