@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Margin — the AI reads the posting with you";
+export const alt = "Applywise — the AI reads the posting with you";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -36,9 +36,9 @@ export default function OpengraphImage() {
               fontWeight: 700,
             }}
           >
-            M
+            A
           </div>
-          <div style={{ fontSize: "52px", fontWeight: 700 }}>Margin</div>
+          <div style={{ fontSize: "52px", fontWeight: 700 }}>Applywise</div>
         </div>
         <div
           style={{

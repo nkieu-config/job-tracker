@@ -25,7 +25,7 @@ export function LogoMark({
       )}
     >
       <span className={cn("font-bold leading-none text-on-primary", glyph)}>
-        M
+        A
       </span>
     </div>
   );

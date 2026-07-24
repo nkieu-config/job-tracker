@@ -136,7 +136,7 @@ export default async function TodayPage() {
             Start with a posting
           </h2>
           <p className="max-w-prose font-sans text-body-lg text-ink-mute">
-            Paste a job description and Margin reads it against your resumes —
+            Paste a job description and Applywise reads it against your resumes —
             highlighting what you already have, underlining what you are missing,
             and drafting the questions the posting implies.
           </p>

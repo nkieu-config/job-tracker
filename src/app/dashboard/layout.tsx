@@ -31,7 +31,7 @@ export default async function DashboardLayout({
           <Link href="/dashboard" className="flex items-center gap-2 px-2">
             <LogoMark size="md" />
             <span className="font-display-sm tracking-tight text-primary">
-              Margin
+              Applywise
             </span>
           </Link>
           <nav aria-label="Main">
@@ -57,7 +57,7 @@ export default async function DashboardLayout({
           <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
             <LogoMark size="md" />
             <span className="font-sans text-body-lg font-semibold tracking-tight text-ink">
-              Margin
+              Applywise
             </span>
           </Link>
           <div className="flex shrink-0 items-center gap-2">
