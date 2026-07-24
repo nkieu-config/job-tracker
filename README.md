@@ -1,10 +1,10 @@
-# Margin 🖍️
+# Applywise 🖍️
 
-[![CI](https://github.com/nkieu-config/job-tracker/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nkieu-config/job-tracker/actions/workflows/ci.yml)
+[![CI](https://github.com/nkieu-config/applywise-job-tracker/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nkieu-config/applywise-job-tracker/actions/workflows/ci.yml)
 [![Live demo](https://img.shields.io/badge/demo-live-brightgreen?logo=vercel&logoColor=white)](https://job-tracker-app-project.vercel.app)
 [![License: view-only](https://img.shields.io/badge/license-view--only-informational.svg)](LICENSE)
 
-**The job hunt is a reading problem. This is the tool I built to solve mine.** Margin marks up a job posting against your resume — highlighting what you already have, underlining what you're missing, ranking your resume versions with vector embeddings, and drilling you on the interview questions the posting implies. Built solo as my capstone project, used daily in my real job search.
+**The job hunt is a reading problem. This is the tool I built to solve mine.** Applywise marks up a job posting against your resume — highlighting what you already have, underlining what you're missing, ranking your resume versions with vector embeddings, and drilling you on the interview questions the posting implies. Built solo as my capstone project, used daily in my real job search.
 
 **6 AI features, each with an eval suite · 425 tests + a 6-suite AI eval harness · ~14k lines of strict TypeScript (app, tests, evals)**
 
@@ -14,7 +14,7 @@
 
 ## Try it in 60 seconds
 
-**🔗 Live demo: [job-tracker-app-project.vercel.app](https://job-tracker-app-project.vercel.app)** — click **Try Live Demo** on the homepage (no signup), or sign in directly:
+**🔗 Live demo: [job-tracker-app-project.vercel.app](https://job-tracker-app-project.vercel.app)** — click **Try the live demo** on the homepage (no signup), or sign in directly:
 
 | Field        | Value                 |
 | ------------ | --------------------- |
@@ -126,7 +126,7 @@ Capture starts with the posting, not with a grid of empty fields. What the model
 
 The design system in [docs/design.md](docs/design.md), as actually rendered:
 
-![Margin landing page — hero, the AI features, and the closing call to action](docs/screenshots/landing.png)
+![Applywise landing page — hero, the AI features, and the closing call to action](docs/screenshots/landing.png)
 
 </details>
 
@@ -137,7 +137,7 @@ Every image on this page is generated from the seeded demo by Playwright — `np
 | Layer     | Choice                                                                              | Why                                                                                    |
 | --------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | Framework | Next.js 16 (App Router, Server Actions, Route Handlers) + TypeScript strict         | One framework covers server-rendered pages, mutations and token streaming              |
-| AI        | Gemini 3.1 Flash Lite (3.5 Flash for bullet tailoring) + `gemini-embedding-001`, in-process from `server/ai/` | Native JSON-schema output, one vendor for generation + embeddings; the eval harness picks the model per task |
+| AI        | Gemini 3.5 Flash Lite (3.5 Flash for bullet tailoring) + `gemini-embedding-001`, in-process from `server/ai/` | Native JSON-schema output, one vendor for generation + embeddings; the eval harness picks the model per task |
 | Database  | PostgreSQL (Neon) + Prisma 7 + pgvector                                             | Vectors live beside the relational rows — ranking is one SQL query, not a second store |
 | Auth      | Better Auth (sessions in Postgres; email/password + optional GitHub/Google OAuth)   | Sessions in my own database, scoped by the same `userId` as everything else            |
 | UI        | Tailwind CSS v4, semantic design tokens ([design system](docs/design.md))           | Tokens keep 13 pages consistent without pulling in a component library                 |
@@ -174,12 +174,12 @@ Full environment-variable reference, scripts and deploy guide: [docs/setup.md](d
 
 ## Testing & quality
 
-425 tests across two Vitest projects, plus three Playwright suites (17 browser tests including the sign-in setup, run separately):
+425 tests across two Vitest projects, plus three Playwright suites (17 browser tests including the sign-in setup) — every one of them gating each push and pull request:
 
 - **Node (server)** — ownership scoping of every Server Action, the JD-analysis cache short-circuit, the pipeline-snapshot aggregation, the resume upload's blob lifecycle including compensating deletes, the page cap that stops a PDF bomb from pinning the function, rate limiting for both AI and auth, embedding batch splitting, and the fence that keeps a job description from being read as prompt instructions.
 - **jsdom (components)** — the streaming UI's save/discard rules and the accessibility invariants of the drag-and-drop board.
 - **Integration (10 of the 425)** — run against a real Postgres, and skip locally when no database is reachable. CI always runs them against a `pgvector/pgvector` service container, so the raw SQL the mocked unit tests can't reach stays covered: the rate limiter's atomic upsert, and the predicate deciding whether a resume holds readable text.
-- **e2e (`npm run test:e2e`)** — three Playwright suites against a running app. A read-only smoke test walks sign-in, Today, navigation and the auth redirect on the shared demo without mutating it; a separate suite signs up a throwaway account, drives the full create → edit → delete lifecycle, and deletes the account afterwards; and an axe suite fails the build on any serious or critical accessibility violation on every screen a visitor lands on, plus the keyboard paths through the desk tabs and the command palette.
+- **e2e (`npm run test:e2e`)** — three Playwright suites against a running app. A read-only smoke test walks sign-in, Today, navigation and the auth redirect on the shared demo without mutating it; a separate suite signs up a throwaway account, drives the full create → edit → delete lifecycle, and deletes the account afterwards; and an axe suite fails the build on any serious or critical accessibility violation on every screen a visitor lands on, plus the keyboard paths through the desk tabs and the command palette. CI builds the app, seeds a throwaway database and runs all three — an accessibility gate nobody remembers to run is not a gate.
 
 Security-critical modules — the prompt fence, the admin gate, the AI ownership guard and the PDF page cap among them — are pinned to **100% coverage thresholds** in CI.
 
@@ -195,7 +195,7 @@ npm run screenshots     # regenerate README screenshots via Playwright
 
 ## CI/CD
 
-- **Every push and PR to `main`** — [CI](.github/workflows/ci.yml) runs lint → typecheck → all tests with coverage thresholds → a production build.
+- **Every push and PR to `main`** — [CI](.github/workflows/ci.yml) runs two jobs side by side: `verify` (lint → typecheck → all tests with coverage thresholds → a production build) and `e2e` (build the app, seed a throwaway Postgres, then the smoke, mutating and accessibility suites in a real browser). A drift guard in the first fails the build if the test counts this README advertises stop matching the suites.
 - **AI evals are deliberately not in push CI** — they call the real Gemini API, which costs quota. A [manual workflow](.github/workflows/eval.yml) runs any suite on demand and uploads the scorecard as an artifact; the pure metric functions are still unit-tested in every CI run.
 - **Nightly** — [a scheduled workflow](.github/workflows/reseed-demo.yml) reseeds the shared demo account, so whatever visitors changed during the day rolls back to a fully populated state.
 - **Deploy** — Vercel rebuilds and ships `main` automatically; the step-by-step Neon → Vercel setup is in [docs/deploy.md](docs/deploy.md).
@@ -207,7 +207,7 @@ npm run screenshots     # regenerate README screenshots via Playwright
 | [docs/architecture.md](docs/architecture.md) | System design, data model, key decisions, challenges & solutions |
 | [docs/setup.md](docs/setup.md)               | Local setup, env vars, scripts, demo account                     |
 | [docs/deploy.md](docs/deploy.md)             | Step-by-step deploy: Neon → Vercel                               |
-| [docs/manual-qa.md](docs/manual-qa.md)       | 14-step click-through smoke test                                 |
+| [docs/manual-qa.md](docs/manual-qa.md)       | 30-step click-through smoke test                                 |
 | [evals/](evals/)                             | AI evaluation harness — methodology + scorecard                  |
 | [docs/design.md](docs/design.md)             | Design system: tokens, typography, components                    |
 

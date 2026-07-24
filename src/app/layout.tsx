@@ -3,6 +3,12 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Literata } from "next/font/google";
 import { ToastProvider } from "@/components/ui/toast";
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TAGLINE,
+  SITE_URL,
+} from "@/lib/constants/site";
 import "./globals.css";
 
 // The document tier: job descriptions, coaching briefs, interview questions —
@@ -13,27 +19,27 @@ const literata = Literata({
   display: "swap",
 });
 
+const SOCIAL_DESCRIPTION =
+  "Paste a job posting and watch it get marked up against your resume — matched skills highlighted, gaps underlined, interview questions drilled.";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://job-tracker-app-project.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Margin — the AI reads the posting with you",
-    template: "%s · Margin",
+    default: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "Margin marks up a job posting against your resume: what you already have, what you're missing, and how to answer for it.",
+  description: SITE_DESCRIPTION,
   openGraph: {
-    title: "Margin — the AI reads the posting with you",
-    description:
-      "Paste a job posting and watch it get marked up against your resume — matched skills highlighted, gaps underlined, interview questions drilled.",
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SOCIAL_DESCRIPTION,
     url: "/",
-    siteName: "Margin",
+    siteName: SITE_NAME,
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Margin — the AI reads the posting with you",
-    description:
-      "Paste a job posting and watch it get marked up against your resume — matched skills highlighted, gaps underlined, interview questions drilled.",
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SOCIAL_DESCRIPTION,
   },
 };
 
