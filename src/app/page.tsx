@@ -231,13 +231,19 @@ export default function Home() {
               </p>
             </Reveal>
             <Reveal delay={80}>
-              <dl className="flex gap-10">
+              {/* Scale is the argument here: these are the numbers that
+                  separate this from a wrapper around an API, so they are set at
+                  the display tier rather than mentioned in passing. Mono, not
+                  the display face, because every one of them is a count CI
+                  recomputes — the same reason the rest of the app sets figures
+                  in mono. */}
+              <dl className="flex flex-wrap gap-x-10 gap-y-6">
                 {STATS.map((stat) => (
                   <div key={stat.label} className="max-w-32">
-                    <dt className="font-display-sm font-mono tabular-nums text-primary">
+                    <dt className="font-display-md font-mono tabular-nums leading-none text-primary sm:font-display-lg">
                       {stat.value}
                     </dt>
-                    <dd className="mt-1 font-sans text-caption leading-snug text-ink-mute">
+                    <dd className="mt-2 font-sans text-caption leading-snug text-ink-mute">
                       {stat.label}
                     </dd>
                   </div>
@@ -248,32 +254,42 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-hairline bg-canvas-lavender px-4 py-16 md:px-10">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-10">
-          <div className="flex flex-col gap-5">
-            <h2 className="max-w-xl font-display-md text-balance text-ink">
+      {/* The page closes on the brand instead of trailing off into a pale tint.
+          The surface is the fixed aubergine rather than `primary`, so the band
+          reads the same in both themes — see --surface-brand in globals.css. */}
+      <footer className="bg-surface-brand px-4 py-20 md:px-10 md:py-28">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-16">
+          <div className="flex flex-col gap-6">
+            <h2 className="max-w-2xl font-display-md text-balance text-on-surface-brand sm:font-display-lg">
               Start tracking — no signup required
             </h2>
-            <div className="flex flex-wrap items-center gap-3">
+            <p className="max-w-xl font-sans text-body-lg leading-relaxed text-on-surface-brand-mute">
+              The demo account is already full of applications, analyses and a
+              coaching brief. Open it and read a posting against a resume.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
               <DemoButton
                 label="Try the live demo"
-                className={buttonClass({ size: "lg" })}
+                className={buttonClass({ variant: "on-brand", size: "lg" })}
               />
               <Link
                 href="/sign-up"
-                className={buttonClass({ variant: "ghost", size: "lg" })}
+                className={buttonClass({
+                  variant: "outline-on-brand",
+                  size: "lg",
+                })}
               >
                 Create an account
               </Link>
             </div>
           </div>
-          <div className="flex flex-col justify-between gap-3 border-t border-hairline pt-6 font-sans text-caption text-ink-mute sm:flex-row">
+          <div className="flex flex-col justify-between gap-3 border-t border-on-surface-brand/20 pt-6 font-sans text-caption text-on-surface-brand-mute sm:flex-row">
             <p translate="no">© 2026 Applywise</p>
             <a
               href="https://github.com/nkieu-config/applywise-job-tracker"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium underline-offset-4 transition-colors hover:text-ink hover:underline"
+              className="font-medium underline-offset-4 transition-colors hover:text-on-surface-brand hover:underline"
             >
               View source on GitHub
             </a>
